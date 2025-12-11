@@ -1,0 +1,14 @@
+services:
+  focus-app:
+    build: .
+    networks:
+      - apache_letsencrypt
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./notes.md:/app/notes.md
+    restart: unless-stopped
+
+networks:
+  apache_letsencrypt:
+    external: true

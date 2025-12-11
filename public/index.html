@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#4a4e69">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Focus Assistant</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/svg+xml" href="/icons/icon-192.svg">
+  <link rel="apple-touch-icon" href="/icons/icon-192.svg">
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .login-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .login-container h1 {
+      margin-bottom: 20px;
+      color: #9d4edd;
+    }
+
+    .login-container input {
+      padding: 12px 20px;
+      font-size: 16px;
+      border: 2px solid #4a4e69;
+      border-radius: 8px;
+      background: #16213e;
+      color: #eee;
+      margin-bottom: 15px;
+      width: 250px;
+    }
+
+    .login-container button {
+      padding: 12px 40px;
+      font-size: 16px;
+      background: #9d4edd;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .login-container button:hover {
+      background: #7b2cbf;
+    }
+
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      max-height: 100vh;
+    }
+
+    .tabs-section {
+      background: #16213e;
+      border-bottom: 1px solid #4a4e69;
+    }
+
+    .tab-buttons {
+      display: flex;
+      border-bottom: 1px solid #4a4e69;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 12px;
+      background: transparent;
+      border: none;
+      color: #888;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .tab-btn .tab-info {
+      font-size: 18px;
+      font-family: 'Courier New', monospace;
+      color: #666;
+    }
+
+    .tab-btn.active .tab-info {
+      color: #9d4edd;
+    }
+
+    .tab-btn.active {
+      color: #9d4edd;
+    }
+
+    .tab-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #9d4edd;
+    }
+
+    .tab-btn.running {
+      color: #4ade80;
+    }
+
+    .tab-content {
+      padding: 15px;
+      min-height: 140px;
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .tab-content.collapsed {
+      display: none;
+    }
+
+    .timer-display {
+      font-size: 48px;
+      font-family: 'Courier New', monospace;
+      text-align: center;
+      margin: 10px 0;
+      color: #fff;
+    }
+
+    .timer-display.alarm-time {
+      font-size: 36px;
+      color: #9d4edd;
+    }
+
+    .timer-controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .timer-btn {
+      padding: 10px 20px;
+      font-size: 14px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .timer-btn.primary {
+      background: #9d4edd;
+      color: white;
+    }
+
+    .timer-btn.secondary {
+      background: #4a4e69;
+      color: white;
+    }
+
+    .timer-btn.danger {
+      background: #ef4444;
+      color: white;
+    }
+
+    .timer-btn:hover {
+      opacity: 0.9;
+      transform: scale(1.02);
+    }
+
+    .timer-input {
+      display: flex;
+      justify-content: center;
+      gap: 5px;
+      margin: 10px 0;
+    }
+
+    .timer-input input {
+      width: 60px;
+      padding: 8px;
+      font-size: 18px;
+      text-align: center;
+      background: #16213e;
+      border: 1px solid #4a4e69;
+      border-radius: 4px;
+      color: #eee;
+    }
+
+    .timer-input span {
+      line-height: 40px;
+      color: #888;
+    }
+
+    .content-section {
+      flex: 1;
+      overflow-y: auto;
+      padding: 15px;
+      background: #1a1a2e;
+    }
+
+    .markdown-content {
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      line-height: 1.6;
+    }
+
+    .markdown-content h1 {
+      font-size: 1.5em;
+      color: #9d4edd;
+      margin: 15px 0 10px;
+    }
+
+    .markdown-content h2 {
+      font-size: 1.3em;
+      color: #7b2cbf;
+      margin: 12px 0 8px;
+    }
+
+    .markdown-content h3 {
+      font-size: 1.1em;
+      color: #6b21a8;
+      margin: 10px 0 6px;
+    }
+
+    .markdown-content p {
+      margin: 8px 0;
+    }
+
+    .markdown-content ul,
+    .markdown-content ol {
+      margin: 8px 0;
+      padding-left: 25px;
+    }
+
+    .markdown-content li {
+      margin: 4px 0;
+    }
+
+    .markdown-content code {
+      background: #16213e;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 0.9em;
+    }
+
+    .markdown-content pre {
+      background: #16213e;
+      padding: 10px;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 10px 0;
+    }
+
+    .markdown-content blockquote {
+      border-left: 3px solid #9d4edd;
+      padding-left: 15px;
+      margin: 10px 0;
+      color: #aaa;
+    }
+
+    .markdown-content input[type="checkbox"] {
+      margin-right: 8px;
+    }
+
+    .fab {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: #9d4edd;
+      color: white;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(157, 78, 221, 0.4);
+      transition: all 0.2s;
+      z-index: 100;
+    }
+
+    .fab:hover {
+      transform: scale(1.1);
+      background: #7b2cbf;
+    }
+
+    .fab-menu {
+      position: fixed;
+      bottom: 85px;
+      right: 20px;
+      background: #16213e;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+      z-index: 100;
+    }
+
+    .fab-menu-item {
+      display: block;
+      width: 100%;
+      padding: 15px 20px;
+      background: transparent;
+      border: none;
+      color: #eee;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+
+    .fab-menu-item:hover {
+      background: #4a4e69;
+    }
+
+    .fab-menu-item:not(:last-child) {
+      border-bottom: 1px solid #4a4e69;
+    }
+
+    .notification-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: #ef4444;
+      color: white;
+      padding: 15px;
+      text-align: center;
+      font-weight: bold;
+      z-index: 1000;
+      animation: flash 0.5s infinite;
+    }
+
+    @keyframes flash {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.7;
+      }
+    }
+
+    .notification-bar button {
+      margin-left: 15px;
+      padding: 8px 20px;
+      background: white;
+      color: #ef4444;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    /* Custom Time Picker Styles */
+    .time-picker-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 999;
+    }
+
+    .time-picker-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      margin-top: 8px;
+      background: #16213e;
+      border: 1px solid #4a4e69;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      display: flex;
+      overflow: hidden;
+      width: 200px;
+      height: 250px;
+    }
+
+    .time-picker-column {
+      flex: 1;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+    }
+
+    .time-picker-column::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .time-picker-column::-webkit-scrollbar-thumb {
+      background: #4a4e69;
+      border-radius: 3px;
+    }
+
+    .time-picker-item {
+      padding: 10px;
+      text-align: center;
+      cursor: pointer;
+      color: #888;
+      transition: all 0.2s;
+    }
+
+    .time-picker-item:hover {
+      background: #4a4e69;
+      color: #eee;
+    }
+
+    .time-picker-item.active {
+      background: #9d4edd;
+      color: white;
+      font-weight: bold;
+    }
+
+    .time-picker-header {
+      text-align: center;
+      padding: 5px;
+      background: #16213e;
+      border-bottom: 1px solid #4a4e69;
+      position: sticky;
+      top: 0;
+      font-size: 12px;
+      color: #888;
+      font-family: monospace;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback } = React;
+
+    // ============ AUDIO UTILITY ============
+    let alarmAudioInterval = null;
+
+    const playAlarmSound = () => {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const playBeep = (freq, startTime, duration) => {
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.frequency.value = freq;
+        oscillator.type = 'sine';
+        gainNode.gain.setValueAtTime(0.3, startTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+        oscillator.start(startTime);
+        oscillator.stop(startTime + duration);
+      };
+
+      // Play a sequence of beeps
+      const now = audioCtx.currentTime;
+      for (let i = 0; i < 5; i++) {
+        playBeep(800, now + i * 0.3, 0.2);
+      }
+    };
+
+    const startContinuousAlarm = () => {
+      if (alarmAudioInterval) return; // Already playing
+      playAlarmSound();
+      alarmAudioInterval = setInterval(() => {
+        playAlarmSound();
+      }, 2000); // Repeat every 2 seconds
+    };
+
+    const stopContinuousAlarm = () => {
+      if (alarmAudioInterval) {
+        clearInterval(alarmAudioInterval);
+        alarmAudioInterval = null;
+      }
+    };
+
+    // ============ CUSTOM TIME PICKER COMPONENT ============
+    const CustomTimePicker = ({ value, onChange, onClose }) => {
+      const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
+      const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
+
+      const [selectedHour, selectedMinute] = (value || '00:00').split(':');
+
+      const hourRef = useRef(null);
+      const minuteRef = useRef(null);
+
+      useEffect(() => {
+        // Scroll to selected values on mount
+        if (hourRef.current) {
+          const activeHour = hourRef.current.querySelector('.active');
+          if (activeHour) activeHour.scrollIntoView({ block: 'center' });
+        }
+        if (minuteRef.current) {
+          const activeMinute = minuteRef.current.querySelector('.active');
+          if (activeMinute) activeMinute.scrollIntoView({ block: 'center' });
+        }
+      }, []);
+
+      const handleHourClick = (h) => {
+        onChange(`${h}:${selectedMinute}`);
+      };
+
+      const handleMinuteClick = (m) => {
+        onChange(`${selectedHour}:${m}`);
+      };
+
+      return (
+        <>
+          <div className="time-picker-overlay" onClick={onClose}></div>
+          <div className="time-picker-dropdown" onClick={(e) => e.stopPropagation()}>
+            <div className="time-picker-column" ref={hourRef}>
+              <div className="time-picker-header">HH</div>
+              {hours.map(h => (
+                <div
+                  key={h}
+                  className={`time-picker-item ${h === selectedHour ? 'active' : ''}`}
+                  onClick={() => handleHourClick(h)}
+                >
+                  {h}
+                </div>
+              ))}
+              <div style={{ height: 125 }}></div>
+            </div>
+            <div className="time-picker-column" style={{ borderLeft: '1px solid #4a4e69' }} ref={minuteRef}>
+              <div className="time-picker-header">MM</div>
+              {minutes.map(m => (
+                <div
+                  key={m}
+                  className={`time-picker-item ${m === selectedMinute ? 'active' : ''}`}
+                  onClick={() => handleMinuteClick(m)}
+                >
+                  {m}
+                </div>
+              ))}
+              <div style={{ height: 125 }}></div>
+            </div>
+          </div>
+        </>
+      );
+    };
+
+    // ============ LOGIN COMPONENT ============
+    const Login = ({ onLogin }) => {
+      const [password, setPassword] = useState('');
+      const [error, setError] = useState('');
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        document.cookie = `auth=${password}; path=/; max-age=31536000`;
+        onLogin();
+      };
+
+      return (
+        <div className="login-container">
+          <h1>🧠 Focus Assistant</h1>
+          <form onSubmit={handleSubmit}>
+            <input
+              type="password"
+              placeholder="Enter password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoFocus
+            />
+            <button type="submit">Enter</button>
+          </form>
+          {error && <p style={{ color: '#ef4444', marginTop: 10 }}>{error}</p>}
+        </div>
+      );
+    };
+
+    // ============ ALARM COMPONENT ============
+    const Alarm = ({ isActive, onActiveChange, onAlarmTimeChange }) => {
+      const [alarmTime, setAlarmTime] = useState(() => {
+        const now = new Date();
+        return now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      });
+      const [isMobile, setIsMobile] = useState(false);
+      const [isPickerOpen, setIsPickerOpen] = useState(false);
+      const [isSet, setIsSet] = useState(false);
+
+      useEffect(() => {
+        const checkMobile = () => {
+          const ua = navigator.userAgent.toLowerCase();
+          return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(ua);
+        };
+        setIsMobile(checkMobile());
+      }, []);
+      const [isRinging, setIsRinging] = useState(false);
+      const intervalRef = useRef(null);
+
+      // Format time in 24-hour format
+      const formatTime24h = (timeStr) => {
+        if (!timeStr) return '';
+        // timeStr is already in HH:MM format from the input
+        return timeStr;
+      };
+
+      useEffect(() => {
+        onAlarmTimeChange(isSet ? formatTime24h(alarmTime) : '');
+      }, [isSet, alarmTime, onAlarmTimeChange]);
+
+      useEffect(() => {
+        if (isSet && alarmTime) {
+          intervalRef.current = setInterval(() => {
+            const now = new Date();
+            const currentTime = now.toTimeString().slice(0, 5);
+            if (currentTime === alarmTime && !isRinging) {
+              setIsRinging(true);
+              onActiveChange(true);
+              startContinuousAlarm();
+              // Request notification permission and show notification
+              if (Notification.permission === 'granted') {
+                new Notification('⏰ Alarm!', { body: `It's ${alarmTime}` });
+              }
+            }
+          }, 1000);
+        }
+        return () => clearInterval(intervalRef.current);
+      }, [isSet, alarmTime, isRinging]);
+
+      const handleSet = () => {
+        if (alarmTime) {
+          setIsSet(true);
+          onActiveChange(true);
+          Notification.requestPermission();
+        }
+      };
+
+      const handleClear = () => {
+        setIsSet(false);
+        setIsRinging(false);
+        onActiveChange(false);
+        stopContinuousAlarm();
+        clearInterval(intervalRef.current);
+      };
+
+      const handleDismiss = () => {
+        setIsRinging(false);
+        setIsSet(false);
+        onActiveChange(false);
+        stopContinuousAlarm();
+      };
+
+      return (
+        <div>
+          {isRinging && (
+            <div className="notification-bar">
+              ⏰ ALARM! It's {formatTime24h(alarmTime)}
+              <button onClick={handleDismiss}>Dismiss</button>
+            </div>
+          )}
+          <div className="timer-input" style={{ position: 'relative', width: 'fit-content', margin: '10px auto' }}>
+            <div
+              onClick={() => !isSet && !isMobile && setIsPickerOpen(!isPickerOpen)}
+              style={{
+                padding: '8px',
+                fontSize: '18px',
+                textAlign: 'center',
+                background: '#16213e',
+                border: '1px solid #4a4e69',
+                borderRadius: '4px',
+                color: isSet ? '#888' : '#eee',
+                width: '140px',
+                cursor: isSet ? 'not-allowed' : (isMobile ? 'default' : 'pointer'),
+                userSelect: 'none'
+              }}
+            >
+              {alarmTime}
+            </div>
+
+            {/* Desktop: Custom Picker */}
+            {!isMobile && isPickerOpen && !isSet && (
+              <CustomTimePicker
+                value={alarmTime}
+                onChange={setAlarmTime}
+                onClose={() => setIsPickerOpen(false)}
+              />
+            )}
+
+            {/* Mobile: Native Overlay Input */}
+            {isMobile && (
+              <input
+                type="time"
+                value={alarmTime}
+                onChange={(e) => setAlarmTime(e.target.value)}
+                disabled={isSet}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  opacity: 0,
+                  cursor: isSet ? 'default' : 'pointer'
+                }}
+              />
+            )}
+          </div>
+          {isSet && <div className="timer-display alarm-time">Set for {formatTime24h(alarmTime)}</div>}
+          <div className="timer-controls">
+            {!isSet ? (
+              <button className="timer-btn primary" onClick={handleSet}>Set Alarm</button>
+            ) : (
+              <button className="timer-btn danger" onClick={handleClear}>Clear</button>
+            )}
+          </div>
+        </div>
+      );
+    };
+
+    // ============ TIMER COMPONENT ============
+    const Timer = ({ isActive, onActiveChange, onTimeLeftChange }) => {
+      const [minutes, setMinutes] = useState(25);
+      const [seconds, setSeconds] = useState(0);
+      const [timeLeft, setTimeLeft] = useState(null);
+      const [isRunning, setIsRunning] = useState(false);
+      const [isFinished, setIsFinished] = useState(false);
+      const intervalRef = useRef(null);
+
+      useEffect(() => {
+        onTimeLeftChange(timeLeft !== null ? timeLeft : (minutes * 60 + seconds));
+      }, [timeLeft, minutes, seconds, onTimeLeftChange]);
+
+      useEffect(() => {
+        if (isRunning && timeLeft > 0) {
+          intervalRef.current = setInterval(() => {
+            setTimeLeft(t => {
+              if (t <= 1) {
+                setIsRunning(false);
+                setIsFinished(true);
+                onActiveChange(false);
+                startContinuousAlarm();
+                if (Notification.permission === 'granted') {
+                  new Notification('⏱️ Timer Done!', { body: 'Time is up!' });
+                }
+                return 0;
+              }
+              return t - 1;
+            });
+          }, 1000);
+        }
+        return () => clearInterval(intervalRef.current);
+      }, [isRunning]);
+
+      const handleStart = () => {
+        if (timeLeft === null) {
+          setTimeLeft(minutes * 60 + seconds);
+        }
+        setIsRunning(true);
+        setIsFinished(false);
+        onActiveChange(true);
+        Notification.requestPermission();
+      };
+
+      const handlePause = () => {
+        setIsRunning(false);
+      };
+
+      const handleReset = () => {
+        setIsRunning(false);
+        setTimeLeft(null);
+        setIsFinished(false);
+        onActiveChange(false);
+        stopContinuousAlarm();
+      };
+
+      const formatTime = (secs) => {
+        if (secs === null) secs = minutes * 60 + seconds;
+        const m = Math.floor(secs / 60);
+        const s = secs % 60;
+        return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+      };
+
+      return (
+        <div>
+          {isFinished && (
+            <div className="notification-bar">
+              ⏱️ TIMER DONE!
+              <button onClick={() => { handleReset(); stopContinuousAlarm(); }}>Dismiss</button>
+            </div>
+          )}
+          {timeLeft === null ? (
+            <div className="timer-input">
+              <input
+                type="number"
+                min="0"
+                max="99"
+                value={minutes}
+                onChange={(e) => setMinutes(Math.max(0, parseInt(e.target.value) || 0))}
+              />
+              <span>:</span>
+              <input
+                type="number"
+                min="0"
+                max="59"
+                value={seconds}
+                onChange={(e) => setSeconds(Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
+              />
+            </div>
+          ) : null}
+          <div className="timer-display">{formatTime(timeLeft)}</div>
+          <div className="timer-controls">
+            {!isRunning ? (
+              <button className="timer-btn primary" onClick={handleStart}>
+                {timeLeft === null ? 'Start' : 'Resume'}
+              </button>
+            ) : (
+              <button className="timer-btn secondary" onClick={handlePause}>Pause</button>
+            )}
+            <button className="timer-btn danger" onClick={handleReset}>Reset</button>
+          </div>
+        </div>
+      );
+    };
+
+    // ============ STOPWATCH COMPONENT ============
+    const Stopwatch = ({ isActive, onActiveChange, onElapsedChange }) => {
+      const [elapsed, setElapsed] = useState(0);
+      const [isRunning, setIsRunning] = useState(false);
+      const [laps, setLaps] = useState([]);
+      const intervalRef = useRef(null);
+      const startTimeRef = useRef(null);
+
+      useEffect(() => {
+        onElapsedChange(elapsed);
+      }, [elapsed, onElapsedChange]);
+
+      useEffect(() => {
+        if (isRunning) {
+          startTimeRef.current = Date.now() - elapsed;
+          intervalRef.current = setInterval(() => {
+            setElapsed(Date.now() - startTimeRef.current);
+          }, 10);
+        }
+        return () => clearInterval(intervalRef.current);
+      }, [isRunning]);
+
+      const handleStart = () => {
+        setIsRunning(true);
+        onActiveChange(true);
+      };
+
+      const handleStop = () => {
+        setIsRunning(false);
+        onActiveChange(elapsed > 0);
+      };
+
+      const handleReset = () => {
+        setIsRunning(false);
+        setElapsed(0);
+        setLaps([]);
+        onActiveChange(false);
+      };
+
+      const handleLap = () => {
+        setLaps([...laps, elapsed]);
+      };
+
+      const formatTime = (ms) => {
+        const totalSecs = Math.floor(ms / 1000);
+        const hours = Math.floor(totalSecs / 3600);
+        const mins = Math.floor((totalSecs % 3600) / 60);
+        const secs = totalSecs % 60;
+        const centis = Math.floor((ms % 1000) / 10);
+        if (hours > 0) {
+          return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${centis.toString().padStart(2, '0')}`;
+      };
+
+      return (
+        <div>
+          <div className="timer-display">{formatTime(elapsed)}</div>
+          <div className="timer-controls">
+            {!isRunning ? (
+              <button className="timer-btn primary" onClick={handleStart}>
+                {elapsed === 0 ? 'Start' : 'Resume'}
+              </button>
+            ) : (
+              <>
+                <button className="timer-btn secondary" onClick={handleStop}>Stop</button>
+                <button className="timer-btn secondary" onClick={handleLap}>Lap</button>
+              </>
+            )}
+            <button className="timer-btn danger" onClick={handleReset}>Reset</button>
+          </div>
+          {laps.length > 0 && (
+            <div style={{ marginTop: 15, fontSize: 14, color: '#888' }}>
+              {laps.map((lap, i) => (
+                <div key={i}>Lap {i + 1}: {formatTime(lap)}</div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    // ============ MARKDOWN VIEWER COMPONENT ============
+    const MarkdownViewer = ({ content }) => {
+      const html = marked.parse(content || '', { breaks: true, gfm: true });
+      return (
+        <div
+          className="markdown-content"
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+      );
+    };
+
+    // ============ FAB MENU COMPONENT ============
+    const FabMenu = ({ content }) => {
+      const [isOpen, setIsOpen] = useState(false);
+
+      const openGrok = () => {
+        const prompt = `You are helping someone with focus on their tasks. Be concise and actionable. Help them decide what to focus on next, or help them break down overwhelming tasks.
+
+Here is their current context:
+
+${content}
+
+What should they focus on right now?`;
+
+        const encoded = encodeURIComponent(prompt);
+        
+        // Simply open grok.com - the system will handle whether to open in app or browser
+        window.open(`https://grok.com/?q=${encoded}`, '_blank');
+        setIsOpen(false);
+      };
+
+      return (
+        <>
+          {isOpen && (
+            <div className="fab-menu">
+              <button className="fab-menu-item" onClick={openGrok}>
+                🤖 Ask Grok AI for help
+              </button>
+            </div>
+          )}
+          <button className="fab" onClick={() => setIsOpen(!isOpen)}>
+            {isOpen ? '×' : '+'}
+          </button>
+        </>
+      );
+    };
+
+    // ============ MAIN APP COMPONENT ============
+    const App = () => {
+      const [isAuthenticated, setIsAuthenticated] = useState(null);
+      const [activeTab, setActiveTab] = useState('alarm');
+      const [collapsedTabs, setCollapsedTabs] = useState(new Set());
+      const [content, setContent] = useState('');
+      const [alarmActive, setAlarmActive] = useState(false);
+      const [timerActive, setTimerActive] = useState(false);
+      const [stopwatchActive, setStopwatchActive] = useState(false);
+      const [alarmTime, setAlarmTime] = useState('');
+      const [timerTimeLeft, setTimerTimeLeft] = useState(0);
+      const [stopwatchElapsed, setStopwatchElapsed] = useState(0);
+
+      // Check authentication on mount
+      useEffect(() => {
+        fetch('/api/check-auth')
+          .then(res => {
+            setIsAuthenticated(res.ok);
+          })
+          .catch(() => setIsAuthenticated(false));
+      }, []);
+
+      // Setup SSE for content updates
+      useEffect(() => {
+        if (!isAuthenticated) return;
+
+        const eventSource = new EventSource('/api/content-updates');
+
+        eventSource.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.content) {
+              setContent(data.content);
+            }
+          } catch (e) {
+            console.error('Failed to parse SSE data:', e);
+          }
+        };
+
+        eventSource.onerror = () => {
+          // Try to reconnect after a delay
+          eventSource.close();
+          setTimeout(() => {
+            // Component will re-establish connection on next render
+          }, 5000);
+        };
+
+        return () => eventSource.close();
+      }, [isAuthenticated]);
+
+      const formatTabTime = (secs) => {
+        const m = Math.floor(secs / 60);
+        const s = secs % 60;
+        return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+      };
+
+      const formatStopwatchTime = (ms) => {
+        const totalSecs = Math.floor(ms / 1000);
+        const mins = Math.floor(totalSecs / 60);
+        const secs = totalSecs % 60;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      };
+
+      const handleTabClick = (tab) => {
+        if (activeTab === tab) {
+          // Toggle collapse when clicking the same tab
+          setCollapsedTabs(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(tab)) {
+              newSet.delete(tab);
+            } else {
+              newSet.add(tab);
+            }
+            return newSet;
+          });
+        } else {
+          // Switch to new tab and ensure it's not collapsed
+          setActiveTab(tab);
+          setCollapsedTabs(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(tab);
+            return newSet;
+          });
+        }
+      };
+
+      const handleLogin = () => {
+        // Re-check auth after login
+        fetch('/api/check-auth')
+          .then(res => {
+            if (res.ok) {
+              setIsAuthenticated(true);
+            } else {
+              setIsAuthenticated(false);
+              alert('Incorrect password');
+            }
+          });
+      };
+
+      if (isAuthenticated === null) {
+        return <div className="login-container"><h1>Loading...</h1></div>;
+      }
+
+      if (!isAuthenticated) {
+        return <Login onLogin={handleLogin} />;
+      }
+
+      return (
+        <div className="app-container">
+          <div className="tabs-section">
+            <div className="tab-buttons">
+              <button
+                className={`tab-btn ${activeTab === 'alarm' ? 'active' : ''} ${alarmActive ? 'running' : ''}`}
+                onClick={() => handleTabClick('alarm')}
+              >
+                <span>Alarm</span>
+                {alarmTime && <span className="tab-info">{alarmTime}</span>}
+              </button>
+              <button
+                className={`tab-btn ${activeTab === 'timer' ? 'active' : ''} ${timerActive ? 'running' : ''}`}
+                onClick={() => handleTabClick('timer')}
+              >
+                <span>Timer</span>
+                <span className="tab-info">{formatTabTime(timerTimeLeft)}</span>
+              </button>
+              <button
+                className={`tab-btn ${activeTab === 'stopwatch' ? 'active' : ''} ${stopwatchActive ? 'running' : ''}`}
+                onClick={() => handleTabClick('stopwatch')}
+              >
+                <span>Stopwatch</span>
+                <span className="tab-info">{formatStopwatchTime(stopwatchElapsed)}</span>
+              </button>
+            </div>
+            <div className={`tab-content ${activeTab === 'alarm' && !collapsedTabs.has('alarm') ? 'active' : ''}`}>
+              <Alarm isActive={alarmActive} onActiveChange={setAlarmActive} onAlarmTimeChange={setAlarmTime} />
+            </div>
+            <div className={`tab-content ${activeTab === 'timer' && !collapsedTabs.has('timer') ? 'active' : ''}`}>
+              <Timer isActive={timerActive} onActiveChange={setTimerActive} onTimeLeftChange={setTimerTimeLeft} />
+            </div>
+            <div className={`tab-content ${activeTab === 'stopwatch' && !collapsedTabs.has('stopwatch') ? 'active' : ''}`}>
+              <Stopwatch isActive={stopwatchActive} onActiveChange={setStopwatchActive} onElapsedChange={setStopwatchElapsed} />
+            </div>
+          </div>
+
+          <div className="content-section">
+            <MarkdownViewer content={content} />
+          </div>
+
+          <FabMenu content={content} />
+        </div>
+      );
+    };
+
+    // ============ RENDER ============
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then(() => console.log('Service Worker registered'))
+        .catch(err => console.log('Service Worker registration failed:', err));
+    }
+  </script>
+</body>
+
+</html>
