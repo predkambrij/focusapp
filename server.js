@@ -2,15 +2,61 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const app = express();
-const PORT = 3000;
 
-// Hardcoded password - change this to your own
-const PASSWORD = 'focus123';
+// Load configuration
+const CONFIG_FILE = path.join(__dirname, 'config.json');
+if (!fs.existsSync(CONFIG_FILE)) {
+  console.error('ERROR: config.json not found. Please create it from config.example.json');
+  process.exit(1);
+}
 
-// Path to the notes file
-const NOTES_FILE = path.join(__dirname, 'notes.md');
+let config;
+try {
+  config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8'));
+} catch (err) {
+  console.error('ERROR: Failed to parse config.json:', err.message);
+  process.exit(1);
+}
+
+// Validate required config values
+const requiredFields = ['server.host', 'server.port', 'notesFile', 'password', 'grokPromptTemplate'];
+for (const field of requiredFields) {
+  const keys = field.split('.');
+  let value = config;
+  for (const key of keys) {
+    value = value?.[key];
+  }
+  if (value === undefined || value === null || value === '') {
+    console.error(`ERROR: Missing required config field: ${field}`);
+    process.exit(1);
+  }
+}
+
+const HOST = config.server.host;
+const PORT = config.server.port;
+const PASSWORD = config.password;
+const NOTES_FILE = path.isAbsolute(config.notesFile) 
+  ? config.notesFile 
+  : path.join(__dirname, config.notesFile);
+const GROK_PROMPT_TEMPLATE = config.grokPromptTemplate;
+
+// Generate a secure session secret for signing auth tokens
+const SESSION_SECRET = crypto.randomBytes(32).toString('hex');
+
+// Create HMAC signature for auth token
+const signToken = (password) => {
+  const hmac = crypto.createHmac('sha256', SESSION_SECRET);
+  hmac.update(password);
+  return hmac.digest('hex');
+};
+
+// Verify auth token
+const verifyToken = (token) => {
+  return token === signToken(PASSWORD);
+};
 
 app.use(cookieParser());
 app.use(express.json());
@@ -18,21 +64,45 @@ app.use(express.static('public'));
 
 // Auth middleware
 const checkAuth = (req, res, next) => {
-  const pwd = req.cookies?.auth;
-  if (pwd !== PASSWORD) {
+  const token = req.cookies?.auth;
+  if (!token || !verifyToken(token)) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   next();
 };
 
+// Login endpoint - validates password and returns signed token
+app.post('/api/login', (req, res) => {
+  const { password } = req.body;
+  if (password === PASSWORD) {
+    const token = signToken(PASSWORD);
+    res.cookie('auth', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 365 * 24 * 60 * 60 * 1000 // 1 year
+    });
+    res.json({ success: true });
+  } else {
+    res.status(401).json({ error: 'Invalid password' });
+  }
+});
+
 // Check if authenticated
 app.get('/api/check-auth', (req, res) => {
-  const pwd = req.cookies?.auth;
-  if (pwd === PASSWORD) {
+  const token = req.cookies?.auth;
+  if (token && verifyToken(token)) {
     res.json({ authenticated: true });
   } else {
     res.status(401).json({ authenticated: false });
   }
+});
+
+// Get client-safe config (excludes sensitive data)
+app.get('/api/config', checkAuth, (req, res) => {
+  res.json({
+    grokPromptTemplate: GROK_PROMPT_TEMPLATE
+  });
 });
 
 // Get notes content
@@ -99,8 +169,8 @@ app.get('/api/content-updates', checkAuth, (req, res) => {
   });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Focus App Assistant running at http://localhost:${PORT}`);
-  console.log(`Password: ${PASSWORD}`);
+app.listen(PORT, HOST, () => {
+  console.log(`Focus App Assistant running at http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);
+  console.log(`Listening on: ${HOST}:${PORT}`);
   console.log(`Notes file: ${NOTES_FILE}`);
 });

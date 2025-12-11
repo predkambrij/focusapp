@@ -569,11 +569,30 @@
     const Login = ({ onLogin }) => {
       const [password, setPassword] = useState('');
       const [error, setError] = useState('');
+      const [isLoading, setIsLoading] = useState(false);
 
-      const handleSubmit = (e) => {
+      const handleSubmit = async (e) => {
         e.preventDefault();
-        document.cookie = `auth=${password}; path=/; max-age=31536000; SameSite=Strict`;
-        onLogin();
+        setIsLoading(true);
+        setError('');
+        
+        try {
+          const res = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password })
+          });
+          
+          if (res.ok) {
+            onLogin();
+          } else {
+            setError('Incorrect password');
+          }
+        } catch (err) {
+          setError('Connection error');
+        } finally {
+          setIsLoading(false);
+        }
       };
 
       return (
@@ -586,8 +605,11 @@
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoFocus
+              disabled={isLoading}
             />
-            <button type="submit">Enter</button>
+            <button type="submit" disabled={isLoading}>
+              {isLoading ? 'Loading...' : 'Enter'}
+            </button>
           </form>
           {error && <p style={{ color: '#ef4444', marginTop: 10 }}>{error}</p>}
         </div>
@@ -942,17 +964,12 @@
     };
 
     // ============ FAB MENU COMPONENT ============
-    const FabMenu = ({ content }) => {
+    const FabMenu = ({ content, grokPromptTemplate }) => {
       const [isOpen, setIsOpen] = useState(false);
 
       const openGrok = () => {
-        const prompt = `You are helping someone with focus on their tasks. Be concise and actionable. Help them decide what to focus on next, or help them break down overwhelming tasks.
-
-Here is their current context:
-
-${content}
-
-What should they focus on right now?`;
+        // Use template from config, replacing {{CONTENT}} placeholder
+        const prompt = grokPromptTemplate.replace('{{CONTENT}}', content);
 
         const encoded = encodeURIComponent(prompt);
         
@@ -983,6 +1000,7 @@ What should they focus on right now?`;
       const [activeTab, setActiveTab] = useState('alarm');
       const [collapsedTabs, setCollapsedTabs] = useState(new Set());
       const [content, setContent] = useState('');
+      const [grokPromptTemplate, setGrokPromptTemplate] = useState('');
       const [alarmActive, setAlarmActive] = useState(false);
       const [timerActive, setTimerActive] = useState(false);
       const [stopwatchActive, setStopwatchActive] = useState(false);
@@ -1040,6 +1058,16 @@ What should they focus on right now?`;
       // Setup SSE for content updates
       useEffect(() => {
         if (!isAuthenticated) return;
+
+        // Fetch config (grok prompt template)
+        fetch('/api/config')
+          .then(res => res.json())
+          .then(data => {
+            if (data.grokPromptTemplate) {
+              setGrokPromptTemplate(data.grokPromptTemplate);
+            }
+          })
+          .catch(err => console.error('Failed to fetch config:', err));
 
         const eventSource = new EventSource('/api/content-updates');
 
@@ -1163,7 +1191,7 @@ What should they focus on right now?`;
             <MarkdownViewer content={content} />
           </div>
 
-          <FabMenu content={content} />
+          <FabMenu content={content} grokPromptTemplate={grokPromptTemplate} />
         </div>
       );
     };

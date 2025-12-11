@@ -1,0 +1,9 @@
+{
+  "server": {
+    "host": "0.0.0.0",
+    "port": 3000
+  },
+  "notesFile": "./notes.md",
+  "password": "CHANGE_THIS_PASSWORD",
+  "grokPromptTemplate": "You are helping someone with focus on their tasks. Be concise and actionable. Help them decide what to focus on next, or help them break down overwhelming tasks.\n\nHere is their current context:\n\n{{CONTENT}}\n\nWhat should they focus on right now?"
+}
