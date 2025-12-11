@@ -8,9 +8,24 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Focus Assistant</title>
-  <link rel="manifest" href="/manifest.json">
-  <link rel="icon" type="image/svg+xml" href="/icons/icon-192.svg">
-  <link rel="apple-touch-icon" href="/icons/icon-192.svg">
+  <script>
+    // Set base href dynamically based on current path
+    (function() {
+      const path = window.location.pathname;
+      const base = document.createElement('base');
+      // If path ends with index.html or /, use the directory as base
+      // Otherwise assume we're at /something and use that as base
+      if (path.endsWith('/') || path.endsWith('/index.html')) {
+        base.href = path.replace(/index\.html$/, '');
+      } else {
+        base.href = path + '/';
+      }
+      document.head.appendChild(base);
+    })();
+  </script>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="icons/icon-192.svg">
+  <link rel="apple-touch-icon" href="icons/icon-192.svg">
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -577,7 +592,7 @@
         setError('');
         
         try {
-          const res = await fetch('/api/login', {
+          const res = await fetch('api/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ password })
@@ -1048,7 +1063,7 @@
 
       // Check authentication on mount
       useEffect(() => {
-        fetch('/api/check-auth')
+        fetch('api/check-auth')
           .then(res => {
             setIsAuthenticated(res.ok);
           })
@@ -1060,7 +1075,7 @@
         if (!isAuthenticated) return;
 
         // Fetch config (grok prompt template)
-        fetch('/api/config')
+        fetch('api/config')
           .then(res => res.json())
           .then(data => {
             if (data.grokPromptTemplate) {
@@ -1069,7 +1084,7 @@
           })
           .catch(err => console.error('Failed to fetch config:', err));
 
-        const eventSource = new EventSource('/api/content-updates');
+        const eventSource = new EventSource('api/content-updates');
 
         eventSource.onmessage = (event) => {
           try {
@@ -1131,7 +1146,7 @@
 
       const handleLogin = () => {
         // Re-check auth after login
-        fetch('/api/check-auth')
+        fetch('api/check-auth')
           .then(res => {
             if (res.ok) {
               setIsAuthenticated(true);
@@ -1202,7 +1217,7 @@
 
     // Register service worker
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js')
+      navigator.serviceWorker.register('./sw.js')
         .then(() => console.log('Service Worker registered'))
         .catch(err => console.log('Service Worker registration failed:', err));
     }

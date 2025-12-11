@@ -1,4 +1,4 @@
-# Log
+# 14.12.2025
 10-10:40 #task1 made outline and started working
 -11:10 #task1 finished the task
 // break

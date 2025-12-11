@@ -3,8 +3,6 @@ services:
     build: .
     networks:
       - apache_letsencrypt
-    ports:
-      - "3000:3000"
     volumes:
       - ./notes.md:/app/notes.md
       - ./config.json:/app/config.json

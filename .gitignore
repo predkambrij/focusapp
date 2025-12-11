@@ -1,18 +1,1 @@
-# Dependencies
-node_modules/
-
-# Config with sensitive data
 config.json
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Editor files
-.vscode/
-*.swp
-*.swo
-
-# Logs
-*.log
-npm-debug.log*

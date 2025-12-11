@@ -1,8 +1,8 @@
 const CACHE_NAME = 'focus-app-v1';
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json'
+  './',
+  './index.html',
+  './manifest.json'
 ];
 
 // Install - cache static assets
