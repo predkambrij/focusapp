@@ -635,8 +635,13 @@
               onActiveChange(true);
               startContinuousAlarm();
               // Request notification permission and show notification
-              if (Notification.permission === 'granted') {
-                new Notification('⏰ Alarm!', { body: `It's ${alarmTime}` });
+              try {
+                if (Notification.permission === 'granted') {
+                  new Notification('⏰ Alarm!', { body: `It's ${alarmTime}` });
+                }
+              } catch (e) {
+                // Notification API may not work on some mobile browsers
+                console.log('Notification error:', e);
               }
             }
           }, 1000);
@@ -756,8 +761,12 @@
                 setIsFinished(true);
                 onActiveChange(false);
                 startContinuousAlarm();
-                if (Notification.permission === 'granted') {
-                  new Notification('⏱️ Timer Done!', { body: 'Time is up!' });
+                try {
+                  if (Notification.permission === 'granted') {
+                    new Notification('⏱️ Timer Done!', { body: 'Time is up!' });
+                  }
+                } catch (e) {
+                  // Notification API may not work on some mobile browsers (e.g., Chrome Android PWA)
                 }
                 return 0;
               }
