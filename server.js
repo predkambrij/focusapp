@@ -43,8 +43,18 @@ const NOTES_FILE = path.isAbsolute(config.notesFile)
   : path.join(__dirname, config.notesFile);
 const GROK_PROMPT_TEMPLATE = config.grokPromptTemplate;
 
-// Generate a secure session secret for signing auth tokens
-const SESSION_SECRET = crypto.randomBytes(32).toString('hex');
+// Get or generate persistent session secret
+let SESSION_SECRET = config.sessionSecret;
+if (!SESSION_SECRET) {
+  SESSION_SECRET = crypto.randomBytes(32).toString('hex');
+  config.sessionSecret = SESSION_SECRET;
+  try {
+    fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2) + '\n');
+    console.log('Generated new session secret and saved to config.json');
+  } catch (err) {
+    console.error('Warning: Could not save session secret to config.json:', err.message);
+  }
+}
 
 // Create HMAC signature for auth token
 const signToken = (password) => {
@@ -170,7 +180,7 @@ app.get('/api/content-updates', checkAuth, (req, res) => {
 });
 
 app.listen(PORT, HOST, () => {
-  console.log(`Focus App Assistant running at http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);
+  console.log(`Focus App Assistant running at http://${HOST}:${PORT}`);
   console.log(`Listening on: ${HOST}:${PORT}`);
   console.log(`Notes file: ${NOTES_FILE}`);
 });
