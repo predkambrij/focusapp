@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#4a4e69">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Focus Assistant</title>
+  <title>Focus</title>
   <script>
     // Set base href dynamically based on current path
     (function() {
@@ -472,6 +472,21 @@
 <body>
   <div id="root"></div>
 
+  <script>
+    // Initialize Web Workers for accurate background timing
+    // These workers are not affected by browser throttling when tab is in background
+    try {
+      window.timerWorker = new Worker('js/timeWorker.js');
+      window.stopwatchWorker = new Worker('js/stopwatchWorker.js');
+      window.alarmWorker = new Worker('js/alarmWorker.js');
+    } catch (error) {
+      console.error('Worker creation failed:', error);
+      window.timerWorker = null;
+      window.stopwatchWorker = null;
+      window.alarmWorker = null;
+    }
+  </script>
+
   <script type="text/babel">
     const { useState, useEffect, useRef, useCallback } = React;
 
@@ -612,7 +627,7 @@
 
       return (
         <div className="login-container">
-          <h1>🧠 Focus Assistant</h1>
+          <h1>🧠 Focus</h1>
           <form onSubmit={handleSubmit}>
             <input
               type="password"
@@ -649,7 +664,7 @@
         setIsMobile(checkMobile());
       }, []);
       const [isRinging, setIsRinging] = useState(false);
-      const intervalRef = useRef(null);
+      const workerRef = useRef(window.alarmWorker);
 
       // Format time in 24-hour format
       const formatTime24h = (timeStr) => {
@@ -662,35 +677,44 @@
         onAlarmTimeChange(isSet ? formatTime24h(alarmTime) : '');
       }, [isSet, alarmTime, onAlarmTimeChange]);
 
+      // Setup worker message handler
       useEffect(() => {
-        if (isSet && alarmTime) {
-          intervalRef.current = setInterval(() => {
-            const now = new Date();
-            const currentTime = now.toTimeString().slice(0, 5);
-            if (currentTime === alarmTime && !isRinging) {
-              setIsRinging(true);
-              onActiveChange(true);
-              startContinuousAlarm();
-              // Request notification permission and show notification
-              try {
-                if (Notification.permission === 'granted') {
-                  new Notification('⏰ Alarm!', { body: `It's ${alarmTime}` });
+        const worker = workerRef.current;
+        if (!worker) return;
+
+        const handleMessage = (e) => {
+          const { type } = e.data;
+          switch (type) {
+            case 'alarm':
+              if (!isRinging) {
+                setIsRinging(true);
+                onActiveChange(true);
+                startContinuousAlarm();
+                try {
+                  if (Notification.permission === 'granted') {
+                    new Notification('⏰ Alarm!', { body: `It's ${alarmTime}` });
+                  }
+                } catch (e) {
+                  console.log('Notification error:', e);
                 }
-              } catch (e) {
-                // Notification API may not work on some mobile browsers
-                console.log('Notification error:', e);
               }
-            }
-          }, 1000);
-        }
-        return () => clearInterval(intervalRef.current);
-      }, [isSet, alarmTime, isRinging]);
+              break;
+          }
+        };
+
+        worker.addEventListener('message', handleMessage);
+        return () => worker.removeEventListener('message', handleMessage);
+      }, [alarmTime, isRinging, onActiveChange]);
 
       const handleSet = () => {
         if (alarmTime) {
           setIsSet(true);
           onActiveChange(true);
           Notification.requestPermission();
+          // Start the alarm worker
+          if (workerRef.current) {
+            workerRef.current.postMessage({ command: 'set', time: alarmTime });
+          }
         }
       };
 
@@ -699,7 +723,9 @@
         setIsRinging(false);
         onActiveChange(false);
         stopContinuousAlarm();
-        clearInterval(intervalRef.current);
+        if (workerRef.current) {
+          workerRef.current.postMessage({ command: 'clear' });
+        }
       };
 
       const handleDismiss = () => {
@@ -707,6 +733,9 @@
         setIsSet(false);
         onActiveChange(false);
         stopContinuousAlarm();
+        if (workerRef.current) {
+          workerRef.current.postMessage({ command: 'clear' });
+        }
       };
 
       return (
@@ -783,49 +812,70 @@
       const [timeLeft, setTimeLeft] = useState(null);
       const [isRunning, setIsRunning] = useState(false);
       const [isFinished, setIsFinished] = useState(false);
-      const intervalRef = useRef(null);
+      const workerRef = useRef(window.timerWorker);
 
       useEffect(() => {
         onTimeLeftChange(timeLeft !== null ? timeLeft : (minutes * 60 + seconds));
       }, [timeLeft, minutes, seconds, onTimeLeftChange]);
 
+      // Setup worker message handler
       useEffect(() => {
-        if (isRunning && timeLeft > 0) {
-          intervalRef.current = setInterval(() => {
-            setTimeLeft(t => {
-              if (t <= 1) {
-                setIsRunning(false);
-                setIsFinished(true);
-                onActiveChange(false);
-                startContinuousAlarm();
-                try {
-                  if (Notification.permission === 'granted') {
-                    new Notification('⏱️ Timer Done!', { body: 'Time is up!' });
-                  }
-                } catch (e) {
-                  // Notification API may not work on some mobile browsers (e.g., Chrome Android PWA)
+        const worker = workerRef.current;
+        if (!worker) return;
+
+        const handleMessage = (e) => {
+          const { type, remaining } = e.data;
+          switch (type) {
+            case 'tick':
+              setTimeLeft(remaining);
+              break;
+            case 'finished':
+              setTimeLeft(0);
+              setIsRunning(false);
+              setIsFinished(true);
+              onActiveChange(false);
+              startContinuousAlarm();
+              try {
+                if (Notification.permission === 'granted') {
+                  new Notification('⏱️ Timer Done!', { body: 'Time is up!' });
                 }
-                return 0;
+              } catch (e) {
+                // Notification API may not work on some mobile browsers
               }
-              return t - 1;
-            });
-          }, 1000);
-        }
-        return () => clearInterval(intervalRef.current);
-      }, [isRunning]);
+              break;
+            case 'paused':
+              setTimeLeft(remaining);
+              break;
+          }
+        };
+
+        worker.addEventListener('message', handleMessage);
+        return () => worker.removeEventListener('message', handleMessage);
+      }, [onActiveChange]);
 
       const handleStart = () => {
+        const duration = timeLeft !== null ? timeLeft : (minutes * 60 + seconds);
+        if (duration <= 0) return;
+        
         if (timeLeft === null) {
-          setTimeLeft(minutes * 60 + seconds);
+          setTimeLeft(duration);
         }
         setIsRunning(true);
         setIsFinished(false);
         onActiveChange(true);
         Notification.requestPermission();
+
+        // Start the worker
+        if (workerRef.current) {
+          workerRef.current.postMessage({ command: 'start', duration });
+        }
       };
 
       const handlePause = () => {
         setIsRunning(false);
+        if (workerRef.current) {
+          workerRef.current.postMessage({ command: 'pause' });
+        }
       };
 
       const handleReset = () => {
@@ -834,6 +884,9 @@
         setIsFinished(false);
         onActiveChange(false);
         stopContinuousAlarm();
+        if (workerRef.current) {
+          workerRef.current.postMessage({ command: 'stop' });
+        }
       };
 
       const formatTime = (secs) => {
@@ -890,31 +943,50 @@
       const [elapsed, setElapsed] = useState(0);
       const [isRunning, setIsRunning] = useState(false);
       const [laps, setLaps] = useState([]);
-      const intervalRef = useRef(null);
-      const startTimeRef = useRef(null);
+      const workerRef = useRef(window.stopwatchWorker);
 
       useEffect(() => {
         onElapsedChange(elapsed);
       }, [elapsed, onElapsedChange]);
 
+      // Setup worker message handler
       useEffect(() => {
-        if (isRunning) {
-          startTimeRef.current = Date.now() - elapsed;
-          intervalRef.current = setInterval(() => {
-            setElapsed(Date.now() - startTimeRef.current);
-          }, 10);
-        }
-        return () => clearInterval(intervalRef.current);
-      }, [isRunning]);
+        const worker = workerRef.current;
+        if (!worker) return;
+
+        const handleMessage = (e) => {
+          const { type, elapsed: workerElapsed } = e.data;
+          switch (type) {
+            case 'tick':
+              setElapsed(workerElapsed);
+              break;
+            case 'stopped':
+              setElapsed(workerElapsed);
+              break;
+            case 'reset':
+              setElapsed(0);
+              break;
+          }
+        };
+
+        worker.addEventListener('message', handleMessage);
+        return () => worker.removeEventListener('message', handleMessage);
+      }, []);
 
       const handleStart = () => {
         setIsRunning(true);
         onActiveChange(true);
+        if (workerRef.current) {
+          workerRef.current.postMessage({ command: 'start', elapsed });
+        }
       };
 
       const handleStop = () => {
         setIsRunning(false);
         onActiveChange(elapsed > 0);
+        if (workerRef.current) {
+          workerRef.current.postMessage({ command: 'stop' });
+        }
       };
 
       const handleReset = () => {
@@ -922,6 +994,9 @@
         setElapsed(0);
         setLaps([]);
         onActiveChange(false);
+        if (workerRef.current) {
+          workerRef.current.postMessage({ command: 'reset' });
+        }
       };
 
       const handleLap = () => {
@@ -1120,6 +1195,29 @@
         const secs = totalSecs % 60;
         return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
       };
+
+      // Update document title based on active tab
+      useEffect(() => {
+        let title = 'Focus';
+        
+        switch (activeTab) {
+          case 'alarm':
+            if (alarmTime) {
+              title = `⏰ ${alarmTime} - Focus`;
+            } else {
+              title = '⏰ Alarm - Focus';
+            }
+            break;
+          case 'timer':
+            title = `⏱️ ${formatTabTime(timerTimeLeft)} - Focus`;
+            break;
+          case 'stopwatch':
+            title = `🏃 ${formatStopwatchTime(stopwatchElapsed)} - Focus`;
+            break;
+        }
+        
+        document.title = title;
+      }, [activeTab, alarmTime, timerTimeLeft, stopwatchElapsed]);
 
       const handleTabClick = (tab) => {
         if (activeTab === tab) {

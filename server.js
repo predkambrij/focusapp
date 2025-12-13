@@ -179,7 +179,7 @@ app.get('/api/content-updates', checkAuth, (req, res) => {
 });
 
 app.listen(PORT, HOST, () => {
-  console.log(`Focus App Assistant running at http://${HOST}:${PORT}`);
+  console.log(`Focus App running at http://${HOST}:${PORT}`);
   console.log(`Listening on: ${HOST}:${PORT}`);
   console.log(`Notes file: ${NOTES_FILE}`);
 });

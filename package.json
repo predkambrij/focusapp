@@ -1,5 +1,5 @@
 {
-  "name": "focus-app-assistant",
+  "name": "focus-app",
   "version": "1.0.0",
   "description": "PWA to help with focus and cognitive tasks",
   "main": "server.js",
