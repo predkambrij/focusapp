@@ -1159,28 +1159,61 @@
           })
           .catch(err => console.error('Failed to fetch config:', err));
 
-        const eventSource = new EventSource('api/content-updates');
+        let eventSource = null;
+        let reconnectTimeout = null;
 
-        eventSource.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            if (data.content) {
-              setContent(data.content);
+        const connectSSE = () => {
+          // Clean up existing connection
+          if (eventSource) {
+            eventSource.close();
+          }
+
+          eventSource = new EventSource('api/content-updates');
+
+          eventSource.onmessage = (event) => {
+            try {
+              const data = JSON.parse(event.data);
+              if (data.content) {
+                setContent(data.content);
+              }
+            } catch (e) {
+              console.error('Failed to parse SSE data:', e);
             }
-          } catch (e) {
-            console.error('Failed to parse SSE data:', e);
+          };
+
+          eventSource.onerror = () => {
+            // Close the failed connection
+            eventSource.close();
+            // Try to reconnect after a delay
+            clearTimeout(reconnectTimeout);
+            reconnectTimeout = setTimeout(() => {
+              console.log('Reconnecting SSE...');
+              connectSSE();
+            }, 2000);
+          };
+        };
+
+        // Initial connection
+        connectSSE();
+
+        // Reconnect when page becomes visible (handles mobile app switching)
+        const handleVisibilityChange = () => {
+          if (document.visibilityState === 'visible') {
+            console.log('Page visible, reconnecting SSE...');
+            clearTimeout(reconnectTimeout);
+            connectSSE();
           }
         };
 
-        eventSource.onerror = () => {
-          // Try to reconnect after a delay
-          eventSource.close();
-          setTimeout(() => {
-            // Component will re-establish connection on next render
-          }, 5000);
-        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
 
-        return () => eventSource.close();
+        return () => {
+          document.removeEventListener('visibilitychange', handleVisibilityChange);
+          clearTimeout(reconnectTimeout);
+          if (eventSource) {
+            eventSource.close();
+          }
+        };
       }, [isAuthenticated]);
 
       const formatTabTime = (secs) => {
