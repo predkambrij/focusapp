@@ -12,7 +12,7 @@ Enter "demo123" for password: [https://focusapp-demo123.vercel.app/](https://foc
 App:
 ![Main screen](/screenshots/Screenshot_20251213_164951_Chrome.jpg)
 
-Grok (you can ask followup with text or voice):
+Grok (will send initial message, then you can ask followup with text or voice):
 ![Grok](/screenshots/Screenshot_20251213_165048_Grok.jpg)
 
 # Important disclaimer
