@@ -1,5 +1,6 @@
 const express = require('express');
 const cookieParser = require('cookie-parser');
+const rateLimit = require('express-rate-limit');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -63,14 +64,37 @@ const signToken = (password) => {
   return hmac.digest('hex');
 };
 
-// Verify auth token
+// Verify auth token using timing-safe comparison
 const verifyToken = (token) => {
-  return token === signToken(PASSWORD);
+  if (!token) return false;
+  const expectedToken = signToken(PASSWORD);
+  try {
+    // Both buffers must be the same length for timingSafeEqual
+    const tokenBuffer = Buffer.from(token);
+    const expectedBuffer = Buffer.from(expectedToken);
+    
+    if (tokenBuffer.length !== expectedBuffer.length) {
+      return false;
+    }
+    
+    return crypto.timingSafeEqual(tokenBuffer, expectedBuffer);
+  } catch (err) {
+    return false;
+  }
 };
 
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.static('public'));
+
+// Rate limiter for login endpoint
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // Limit each IP to 5 login requests per windowMs
+  message: { error: 'Too many login attempts, please try again later' },
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
 
 // Auth middleware
 const checkAuth = (req, res, next) => {
@@ -82,18 +106,36 @@ const checkAuth = (req, res, next) => {
 };
 
 // Login endpoint - validates password and returns signed token
-app.post('/api/login', (req, res) => {
+app.post('/api/login', loginLimiter, (req, res) => {
   const { password } = req.body;
-  if (password === PASSWORD) {
-    const token = signToken(PASSWORD);
-    res.cookie('auth', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 365 * 24 * 60 * 60 * 1000 // 1 year
-    });
-    res.json({ success: true });
-  } else {
+  
+  // Use timing-safe comparison for password check
+  if (!password) {
+    return res.status(401).json({ error: 'Invalid password' });
+  }
+  
+  try {
+    const passwordBuffer = Buffer.from(password);
+    const expectedBuffer = Buffer.from(PASSWORD);
+    
+    // Ensure both buffers are same length before comparison
+    if (passwordBuffer.length !== expectedBuffer.length) {
+      return res.status(401).json({ error: 'Invalid password' });
+    }
+    
+    if (crypto.timingSafeEqual(passwordBuffer, expectedBuffer)) {
+      const token = signToken(PASSWORD);
+      res.cookie('auth', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 365 * 24 * 60 * 60 * 1000 // 1 year
+      });
+      res.json({ success: true });
+    } else {
+      res.status(401).json({ error: 'Invalid password' });
+    }
+  } catch (err) {
     res.status(401).json({ error: 'Invalid password' });
   }
 });
