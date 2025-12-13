@@ -5,6 +5,9 @@ The aim is that the app is very simple, yet very powerful.
 - Use AI with Note context to discuss anything using text or voice (brainstorm, task breakdown, time estimate, etc)
 - install the app as PWA
 
+## Demo
+Enter "demo123" for password: [https://focusapp-demo123.vercel.app/](https://focusapp-demo123.vercel.app/)
+
 ## Screenshots
 App:
 ![Main screen](/screenshots/Screenshot_20251213_164951_Chrome.jpg)
