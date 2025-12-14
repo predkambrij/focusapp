@@ -6,5 +6,5 @@
   "notesFile": "./notes.md",
   "password": "CHANGE_THIS_PASSWORD",
   "sessionSecret": "",
-  "grokPromptTemplate": "The user will ask you some questions.\n\nHere is their current context:\n\n{{CONTENT}}"
+  "grokPromptTemplate": "The user will ask you some questions. To this message, respond with 'OK.'\n\nHere is their current context:\n\n{{CONTENT}}"
 }
