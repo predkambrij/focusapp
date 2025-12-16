@@ -807,7 +807,7 @@
 
     // ============ TIMER COMPONENT ============
     const Timer = ({ isActive, onActiveChange, onTimeLeftChange }) => {
-      const [minutes, setMinutes] = useState(25);
+      const [minutes, setMinutes] = useState(30);
       const [seconds, setSeconds] = useState(0);
       const [timeLeft, setTimeLeft] = useState(null);
       const [isRunning, setIsRunning] = useState(false);
@@ -1029,7 +1029,7 @@
                 <button className="timer-btn secondary" onClick={handleLap}>Lap</button>
               </>
             )}
-            <button className="timer-btn danger" onClick={handleReset}>Reset</button>
+            {elapsed > 0 && <button className="timer-btn danger" onClick={handleReset}>Reset</button>}
           </div>
           {laps.length > 0 && (
             <div style={{ marginTop: 15, fontSize: 14, color: '#888' }}>
