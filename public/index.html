@@ -29,7 +29,6 @@
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -243,64 +242,58 @@
       word-wrap: break-word;
       overflow-wrap: break-word;
       line-height: 1.6;
-    }
-
-    .markdown-content h1 {
-      font-size: 1.5em;
-      color: #9d4edd;
-      margin: 15px 0 10px;
-    }
-
-    .markdown-content h2 {
-      font-size: 1.3em;
-      color: #7b2cbf;
-      margin: 12px 0 8px;
-    }
-
-    .markdown-content h3 {
-      font-size: 1.1em;
-      color: #6b21a8;
-      margin: 10px 0 6px;
-    }
-
-    .markdown-content p {
-      margin: 8px 0;
-    }
-
-    .markdown-content ul,
-    .markdown-content ol {
-      margin: 8px 0;
-      padding-left: 25px;
-    }
-
-    .markdown-content li {
-      margin: 4px 0;
-    }
-
-    .markdown-content code {
-      background: #16213e;
-      padding: 2px 6px;
-      border-radius: 3px;
+      white-space: pre-wrap;
+      font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro', monospace;
       font-size: 0.9em;
     }
 
-    .markdown-content pre {
+    .markdown-content .md-heading {
+      color: #9d4edd;
+      font-weight: bold;
+    }
+
+    .markdown-content .md-bold {
+      color: #f0a500;
+      font-weight: bold;
+    }
+
+    .markdown-content .md-italic {
+      color: #00b4d8;
+      font-style: italic;
+    }
+
+    .markdown-content .md-code {
       background: #16213e;
-      padding: 10px;
-      border-radius: 6px;
-      overflow-x: auto;
-      margin: 10px 0;
+      padding: 1px 4px;
+      border-radius: 3px;
+      color: #7ee787;
     }
 
-    .markdown-content blockquote {
-      border-left: 3px solid #9d4edd;
-      padding-left: 15px;
-      margin: 10px 0;
-      color: #aaa;
+    .markdown-content .md-code-block {
+      background: #16213e;
+      padding: 2px 4px;
+      border-radius: 3px;
+      color: #7ee787;
     }
 
-    .markdown-content input[type="checkbox"] {
-      margin-right: 8px;
+    .markdown-content .md-link {
+      color: #58a6ff;
+    }
+
+    .markdown-content .md-list {
+      color: #f78166;
+    }
+
+    .markdown-content .md-blockquote {
+      color: #8b949e;
+    }
+
+    .markdown-content .md-hr {
+      color: #6e7681;
+    }
+
+    .markdown-content .md-checkbox {
+      color: #d29922;
     }
 
     .fab {
@@ -1044,12 +1037,165 @@
 
     // ============ MARKDOWN VIEWER COMPONENT ============
     const MarkdownViewer = ({ content }) => {
-      const html = marked.parse(content || '', { breaks: true, gfm: true });
+      // Syntax highlight markdown without rendering it
+      const highlightMarkdown = (text) => {
+        if (!text) return [];
+        
+        const lines = text.split('\n');
+        const result = [];
+        let inCodeBlock = false;
+        
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          
+          // Check for code block delimiters
+          if (line.startsWith('```')) {
+            inCodeBlock = !inCodeBlock;
+            result.push(<span key={i} className="md-code-block">{line}</span>);
+            if (i < lines.length - 1) result.push('\n');
+            continue;
+          }
+          
+          // Inside code block - highlight entire line
+          if (inCodeBlock) {
+            result.push(<span key={i} className="md-code-block">{line}</span>);
+            if (i < lines.length - 1) result.push('\n');
+            continue;
+          }
+          
+          // Headings
+          if (/^#{1,6}\s/.test(line)) {
+            result.push(<span key={i} className="md-heading">{line}</span>);
+            if (i < lines.length - 1) result.push('\n');
+            continue;
+          }
+          
+          // Horizontal rules
+          if (/^(-{3,}|\*{3,}|_{3,})$/.test(line.trim())) {
+            result.push(<span key={i} className="md-hr">{line}</span>);
+            if (i < lines.length - 1) result.push('\n');
+            continue;
+          }
+          
+          // Blockquotes
+          if (/^>\s*/.test(line)) {
+            result.push(<span key={i} className="md-blockquote">{line}</span>);
+            if (i < lines.length - 1) result.push('\n');
+            continue;
+          }
+          
+          // List items and checkboxes
+          if (/^(\s*[-*+]|\s*\d+\.)\s/.test(line)) {
+            const match = line.match(/^(\s*[-*+]|\s*\d+\.)\s/);
+            const checkbox = line.match(/^(\s*[-*+]|\s*\d+\.)\s+\[([ xX])\]/);
+            if (checkbox) {
+              result.push(
+                <span key={i}>
+                  <span className="md-list">{match[0]}</span>
+                  <span className="md-checkbox">[{checkbox[2]}]</span>
+                  {highlightInline(line.slice(match[0].length + 3), `${i}-rest`)}
+                </span>
+              );
+            } else {
+              result.push(
+                <span key={i}>
+                  <span className="md-list">{match[0]}</span>
+                  {highlightInline(line.slice(match[0].length), `${i}-rest`)}
+                </span>
+              );
+            }
+            if (i < lines.length - 1) result.push('\n');
+            continue;
+          }
+          
+          // Regular line with inline highlighting
+          result.push(<span key={i}>{highlightInline(line, i)}</span>);
+          if (i < lines.length - 1) result.push('\n');
+        }
+        
+        return result;
+      };
+      
+      // Highlight inline markdown elements
+      const highlightInline = (text, keyPrefix) => {
+        const parts = [];
+        let remaining = text;
+        let partIndex = 0;
+        
+        while (remaining.length > 0) {
+          // Inline code
+          let match = remaining.match(/^`([^`]+)`/);
+          if (match) {
+            parts.push(<span key={`${keyPrefix}-${partIndex++}`} className="md-code">{match[0]}</span>);
+            remaining = remaining.slice(match[0].length);
+            continue;
+          }
+          
+          // Bold with **
+          match = remaining.match(/^\*\*([^*]+)\*\*/);
+          if (match) {
+            parts.push(<span key={`${keyPrefix}-${partIndex++}`} className="md-bold">{match[0]}</span>);
+            remaining = remaining.slice(match[0].length);
+            continue;
+          }
+          
+          // Bold with __
+          match = remaining.match(/^__([^_]+)__/);
+          if (match) {
+            parts.push(<span key={`${keyPrefix}-${partIndex++}`} className="md-bold">{match[0]}</span>);
+            remaining = remaining.slice(match[0].length);
+            continue;
+          }
+          
+          // Italic with *
+          match = remaining.match(/^\*([^*]+)\*/);
+          if (match) {
+            parts.push(<span key={`${keyPrefix}-${partIndex++}`} className="md-italic">{match[0]}</span>);
+            remaining = remaining.slice(match[0].length);
+            continue;
+          }
+          
+          // Italic with _
+          match = remaining.match(/^_([^_]+)_/);
+          if (match) {
+            parts.push(<span key={`${keyPrefix}-${partIndex++}`} className="md-italic">{match[0]}</span>);
+            remaining = remaining.slice(match[0].length);
+            continue;
+          }
+          
+          // Links [text](url)
+          match = remaining.match(/^\[([^\]]+)\]\([^)]+\)/);
+          if (match) {
+            parts.push(<span key={`${keyPrefix}-${partIndex++}`} className="md-link">{match[0]}</span>);
+            remaining = remaining.slice(match[0].length);
+            continue;
+          }
+          
+          // Images ![alt](url)
+          match = remaining.match(/^!\[([^\]]*)\]\([^)]+\)/);
+          if (match) {
+            parts.push(<span key={`${keyPrefix}-${partIndex++}`} className="md-link">{match[0]}</span>);
+            remaining = remaining.slice(match[0].length);
+            continue;
+          }
+          
+          // No match - add single character as plain text
+          // Accumulate plain text until we hit potential markdown
+          let plainEnd = 1;
+          while (plainEnd < remaining.length && !/[`*_\[!]/.test(remaining[plainEnd])) {
+            plainEnd++;
+          }
+          parts.push(remaining.slice(0, plainEnd));
+          remaining = remaining.slice(plainEnd);
+        }
+        
+        return parts;
+      };
+      
       return (
-        <div
-          className="markdown-content"
-          dangerouslySetInnerHTML={{ __html: html }}
-        />
+        <div className="markdown-content">
+          {highlightMarkdown(content)}
+        </div>
       );
     };
 
