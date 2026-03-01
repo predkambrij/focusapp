@@ -28,441 +28,19 @@
   <link rel="apple-touch-icon" href="icons/icon-192.svg">
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {};
+  </script>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-      background: #1a1a2e;
-      color: #eee;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-
-    .login-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      padding: 20px;
-    }
-
-    .login-container h1 {
-      margin-bottom: 20px;
-      color: #9d4edd;
-    }
-
-    .login-container input {
-      padding: 12px 20px;
-      font-size: 16px;
-      border: 2px solid #4a4e69;
-      border-radius: 8px;
-      background: #16213e;
-      color: #eee;
-      margin-bottom: 15px;
-      width: 250px;
-    }
-
-    .login-container button {
-      padding: 12px 40px;
-      font-size: 16px;
-      background: #9d4edd;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .login-container button:hover {
-      background: #7b2cbf;
-    }
-
-    .app-container {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      max-height: 100vh;
-    }
-
-    .tabs-section {
-      background: #16213e;
-      border-bottom: 1px solid #4a4e69;
-    }
-
-    .tab-buttons {
-      display: flex;
-      border-bottom: 1px solid #4a4e69;
-    }
-
-    .tab-btn {
-      flex: 1;
-      padding: 12px;
-      background: transparent;
-      border: none;
-      color: #888;
-      font-size: 14px;
-      cursor: pointer;
-      transition: all 0.2s;
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .tab-btn .tab-info {
-      font-size: 28px;
-      font-family: 'Courier New', monospace;
-      color: #666;
-    }
-
-    .tab-btn.active .tab-info {
-      color: #9d4edd;
-    }
-
-    .tab-btn.active {
-      color: #9d4edd;
-    }
-
-    .tab-btn.active::after {
-      content: '';
-      position: absolute;
-      bottom: -1px;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: #9d4edd;
-    }
-
-    .tab-btn.running {
-      color: #4ade80;
-    }
-
-    .tab-content {
-      padding: 15px;
-      min-height: 140px;
-      display: none;
-    }
-
-    .tab-content.active {
-      display: block;
-    }
-
-    .tab-content.collapsed {
-      display: none;
-    }
-
-    .timer-display {
-      font-size: 48px;
-      font-family: 'Courier New', monospace;
-      text-align: center;
-      margin: 10px 0;
-      color: #fff;
-    }
-
-    .timer-display.alarm-time {
-      font-size: 36px;
-      color: #9d4edd;
-    }
-
-    .timer-controls {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .timer-btn {
-      padding: 10px 20px;
-      font-size: 14px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .timer-btn.primary {
-      background: #9d4edd;
-      color: white;
-    }
-
-    .timer-btn.secondary {
-      background: #4a4e69;
-      color: white;
-    }
-
-    .timer-btn.danger {
-      background: #ef4444;
-      color: white;
-    }
-
-    .timer-btn:hover {
-      opacity: 0.9;
-      transform: scale(1.02);
-    }
-
-    .timer-input {
-      display: flex;
-      justify-content: center;
-      gap: 5px;
-      margin: 10px 0;
-    }
-
-    .timer-input input {
-      width: 60px;
-      padding: 8px;
-      font-size: 18px;
-      text-align: center;
-      background: #16213e;
-      border: 1px solid #4a4e69;
-      border-radius: 4px;
-      color: #eee;
-    }
-
-    .timer-input span {
-      line-height: 40px;
-      color: #888;
-    }
-
-    .content-section {
-      flex: 1;
-      overflow-y: auto;
-      padding: 15px;
-      background: #1a1a2e;
-    }
-
-    .markdown-content {
-      word-wrap: break-word;
-      overflow-wrap: break-word;
-      line-height: 1.6;
-      white-space: pre-wrap;
-      font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro', monospace;
-      font-size: 0.9em;
-    }
-
-    .markdown-content .md-heading {
-      color: #9d4edd;
-      font-weight: bold;
-    }
-
-    .markdown-content .md-bold {
-      color: #f0a500;
-      font-weight: bold;
-    }
-
-    .markdown-content .md-italic {
-      color: #00b4d8;
-      font-style: italic;
-    }
-
-    .markdown-content .md-code {
-      background: #16213e;
-      padding: 1px 4px;
-      border-radius: 3px;
-      color: #7ee787;
-    }
-
-    .markdown-content .md-code-block {
-      background: #16213e;
-      padding: 2px 4px;
-      border-radius: 3px;
-      color: #7ee787;
-    }
-
-    .markdown-content .md-link {
-      color: #58a6ff;
-    }
-
-    .markdown-content .md-list {
-      color: #f78166;
-    }
-
-    .markdown-content .md-blockquote {
-      color: #8b949e;
-    }
-
-    .markdown-content .md-hr {
-      color: #6e7681;
-    }
-
-    .markdown-content .md-checkbox {
-      color: #d29922;
-    }
-
-    .fab {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      background: #9d4edd;
-      color: white;
-      border: none;
-      font-size: 24px;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(157, 78, 221, 0.4);
-      transition: all 0.2s;
-      z-index: 100;
-    }
-
-    .fab:hover {
-      transform: scale(1.1);
-      background: #7b2cbf;
-    }
-
-    .fab-menu {
-      position: fixed;
-      bottom: 85px;
-      right: 20px;
-      background: #16213e;
-      border-radius: 8px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-      overflow: hidden;
-      z-index: 100;
-    }
-
-    .fab-menu-item {
-      display: block;
-      width: 100%;
-      padding: 15px 20px;
-      background: transparent;
-      border: none;
-      color: #eee;
-      text-align: left;
-      cursor: pointer;
-      transition: background 0.2s;
-      white-space: nowrap;
-    }
-
-    .fab-menu-item:hover {
-      background: #4a4e69;
-    }
-
-    .fab-menu-item:not(:last-child) {
-      border-bottom: 1px solid #4a4e69;
-    }
-
-    .notification-bar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      background: #ef4444;
-      color: white;
-      padding: 15px;
-      text-align: center;
-      font-weight: bold;
-      z-index: 1000;
-      animation: flash 0.5s infinite;
-    }
-
-    @keyframes flash {
-
-      0%,
-      100% {
-        opacity: 1;
-      }
-
-      50% {
-        opacity: 0.7;
-      }
-    }
-
-    .notification-bar button {
-      margin-left: 15px;
-      padding: 8px 20px;
-      background: white;
-      color: #ef4444;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    /* Custom Time Picker Styles */
-    .time-picker-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 999;
-    }
-
-    .time-picker-dropdown {
-      position: absolute;
-      top: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-      margin-top: 8px;
-      background: #16213e;
-      border: 1px solid #4a4e69;
-      border-radius: 8px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-      z-index: 1000;
-      display: flex;
-      overflow: hidden;
-      width: 200px;
-      height: 250px;
-    }
-
-    .time-picker-column {
-      flex: 1;
-      overflow-y: auto;
-      scroll-behavior: smooth;
-    }
-
-    .time-picker-column::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    .time-picker-column::-webkit-scrollbar-thumb {
-      background: #4a4e69;
-      border-radius: 3px;
-    }
-
-    .time-picker-item {
-      padding: 10px;
-      text-align: center;
-      cursor: pointer;
-      color: #888;
-      transition: all 0.2s;
-    }
-
-    .time-picker-item:hover {
-      background: #4a4e69;
-      color: #eee;
-    }
-
-    .time-picker-item.active {
-      background: #9d4edd;
-      color: white;
-      font-weight: bold;
-    }
-
-    .time-picker-header {
-      text-align: center;
-      padding: 5px;
-      background: #16213e;
-      border-bottom: 1px solid #4a4e69;
-      position: sticky;
-      top: 0;
-      font-size: 12px;
-      color: #888;
-      font-family: monospace;
-    }
+    /* Custom scrollbar for time picker columns */
+    .time-picker-column::-webkit-scrollbar { width: 6px; }
+    .time-picker-column::-webkit-scrollbar-thumb { background: #4a4e69; border-radius: 3px; }
   </style>
 </head>
 
-<body>
+<body class="bg-[#1a1a2e] text-[#eee] min-h-screen overflow-x-hidden font-sans">
   <div id="root"></div>
 
   <script>
@@ -536,12 +114,12 @@
       useEffect(() => {
         // Scroll to selected values on mount
         if (hourRef.current) {
-          const activeHour = hourRef.current.querySelector('.active');
-          if (activeHour) activeHour.scrollIntoView({ block: 'center' });
+          const activeEl = hourRef.current.querySelector('.picker-active');
+          if (activeEl) activeEl.scrollIntoView({ block: 'center' });
         }
         if (minuteRef.current) {
-          const activeMinute = minuteRef.current.querySelector('.active');
-          if (activeMinute) activeMinute.scrollIntoView({ block: 'center' });
+          const activeEl = minuteRef.current.querySelector('.picker-active');
+          if (activeEl) activeEl.scrollIntoView({ block: 'center' });
         }
       }, []);
 
@@ -555,14 +133,17 @@
 
       return (
         <>
-          <div className="time-picker-overlay" onClick={onClose}></div>
-          <div className="time-picker-dropdown" onClick={(e) => e.stopPropagation()}>
-            <div className="time-picker-column" ref={hourRef}>
-              <div className="time-picker-header">HH</div>
+          <div className="fixed inset-0 z-[999]" onClick={onClose}></div>
+          <div
+            className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-[#16213e] border border-[#4a4e69] rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.5)] z-[1000] flex overflow-hidden w-[200px] h-[250px]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="time-picker-column flex-1 overflow-y-auto scroll-smooth" ref={hourRef}>
+              <div className="text-center py-1 bg-[#16213e] border-b border-[#4a4e69] sticky top-0 text-xs text-[#888] font-mono">HH</div>
               {hours.map(h => (
                 <div
                   key={h}
-                  className={`time-picker-item ${h === selectedHour ? 'active' : ''}`}
+                  className={`picker-active px-2 py-2 text-center cursor-pointer ${h === selectedHour ? 'bg-[#9d4edd] text-white font-bold' : 'text-[#888] hover:bg-[#4a4e69] hover:text-[#eee]'}`}
                   onClick={() => handleHourClick(h)}
                 >
                   {h}
@@ -570,12 +151,12 @@
               ))}
               <div style={{ height: 125 }}></div>
             </div>
-            <div className="time-picker-column" style={{ borderLeft: '1px solid #4a4e69' }} ref={minuteRef}>
-              <div className="time-picker-header">MM</div>
+            <div className="time-picker-column flex-1 overflow-y-auto scroll-smooth border-l border-[#4a4e69]" ref={minuteRef}>
+              <div className="text-center py-1 bg-[#16213e] border-b border-[#4a4e69] sticky top-0 text-xs text-[#888] font-mono">MM</div>
               {minutes.map(m => (
                 <div
                   key={m}
-                  className={`time-picker-item ${m === selectedMinute ? 'active' : ''}`}
+                  className={`picker-active px-2 py-2 text-center cursor-pointer ${m === selectedMinute ? 'bg-[#9d4edd] text-white font-bold' : 'text-[#888] hover:bg-[#4a4e69] hover:text-[#eee]'}`}
                   onClick={() => handleMinuteClick(m)}
                 >
                   {m}
@@ -619,9 +200,9 @@
       };
 
       return (
-        <div className="login-container">
-          <h1>🧠 Focus</h1>
-          <form onSubmit={handleSubmit}>
+        <div className="flex flex-col items-center justify-center min-h-screen p-5">
+          <h1 className="mb-5 text-[#9d4edd] text-2xl font-bold">🧠 Focus</h1>
+          <form className="flex flex-col items-center" onSubmit={handleSubmit}>
             <input
               type="password"
               placeholder="Enter password"
@@ -629,12 +210,17 @@
               onChange={(e) => setPassword(e.target.value)}
               autoFocus
               disabled={isLoading}
+              className="px-5 py-3 text-base border-2 border-[#4a4e69] rounded-lg bg-[#16213e] text-[#eee] mb-4 w-[250px] outline-none"
             />
-            <button type="submit" disabled={isLoading}>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="px-10 py-3 text-base bg-[#9d4edd] text-white border-none rounded-lg cursor-pointer hover:bg-[#7b2cbf] disabled:opacity-60"
+            >
               {isLoading ? 'Loading...' : 'Enter'}
             </button>
           </form>
-          {error && <p style={{ color: '#ef4444', marginTop: 10 }}>{error}</p>}
+          {error && <p className="text-[#ef4444] mt-2.5">{error}</p>}
         </div>
       );
     };
@@ -662,7 +248,6 @@
       // Format time in 24-hour format
       const formatTime24h = (timeStr) => {
         if (!timeStr) return '';
-        // timeStr is already in HH:MM format from the input
         return timeStr;
       };
 
@@ -704,7 +289,6 @@
           setIsSet(true);
           onActiveChange(true);
           Notification.requestPermission();
-          // Start the alarm worker
           if (workerRef.current) {
             workerRef.current.postMessage({ command: 'set', time: alarmTime });
           }
@@ -734,12 +318,15 @@
       return (
         <div>
           {isRinging && (
-            <div className="notification-bar">
+            <div className="fixed top-0 left-0 right-0 bg-[#ef4444] text-white py-4 text-center font-bold z-[1000]">
               ⏰ ALARM! It's {formatTime24h(alarmTime)}
-              <button onClick={handleDismiss}>Dismiss</button>
+              <button
+                onClick={handleDismiss}
+                className="ml-4 px-5 py-2 bg-white text-[#ef4444] border-none rounded cursor-pointer font-bold"
+              >Dismiss</button>
             </div>
           )}
-          <div className="timer-input" style={{ position: 'relative', width: 'fit-content', margin: '10px auto' }}>
+          <div className="flex justify-center my-2.5 relative" style={{ width: 'fit-content', margin: '10px auto' }}>
             <div
               onClick={() => !isSet && !isMobile && setIsPickerOpen(!isPickerOpen)}
               style={{
@@ -774,24 +361,27 @@
                 value={alarmTime}
                 onChange={(e) => setAlarmTime(e.target.value)}
                 disabled={isSet}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  opacity: 0,
-                  cursor: isSet ? 'default' : 'pointer'
-                }}
+                className="absolute inset-0 opacity-0"
+                style={{ cursor: isSet ? 'default' : 'pointer' }}
               />
             )}
           </div>
-          {isSet && <div className="timer-display alarm-time">Set for {formatTime24h(alarmTime)}</div>}
-          <div className="timer-controls">
+          {isSet && (
+            <div className="text-4xl font-mono text-center my-2.5 text-[#9d4edd]">
+              Set for {formatTime24h(alarmTime)}
+            </div>
+          )}
+          <div className="flex justify-center gap-2.5 flex-wrap">
             {!isSet ? (
-              <button className="timer-btn primary" onClick={handleSet}>Set Alarm</button>
+              <button
+                className="px-5 py-2.5 text-sm border-none rounded-md cursor-pointer bg-[#9d4edd] text-white"
+                onClick={handleSet}
+              >Set Alarm</button>
             ) : (
-              <button className="timer-btn danger" onClick={handleClear}>Clear</button>
+              <button
+                className="px-5 py-2.5 text-sm border-none rounded-md cursor-pointer bg-[#ef4444] text-white"
+                onClick={handleClear}
+              >Clear</button>
             )}
           </div>
         </div>
@@ -858,7 +448,6 @@
         onActiveChange(true);
         Notification.requestPermission();
 
-        // Start the worker
         if (workerRef.current) {
           workerRef.current.postMessage({ command: 'start', duration });
         }
@@ -892,40 +481,54 @@
       return (
         <div>
           {isFinished && (
-            <div className="notification-bar">
+            <div className="fixed top-0 left-0 right-0 bg-[#ef4444] text-white py-4 text-center font-bold z-[1000]">
               ⏱️ TIMER DONE!
-              <button onClick={() => { handleReset(); stopContinuousAlarm(); }}>Dismiss</button>
+              <button
+                onClick={() => { handleReset(); stopContinuousAlarm(); }}
+                className="ml-4 px-5 py-2 bg-white text-[#ef4444] border-none rounded cursor-pointer font-bold"
+              >Dismiss</button>
             </div>
           )}
           {timeLeft === null ? (
-            <div className="timer-input">
+            <div className="flex justify-center gap-1.5 my-2.5">
               <input
                 type="number"
                 min="0"
                 max="99"
                 value={minutes}
                 onChange={(e) => setMinutes(Math.max(0, parseInt(e.target.value) || 0))}
+                className="w-[60px] p-2 text-lg text-center bg-[#16213e] border border-[#4a4e69] rounded text-[#eee] outline-none"
               />
-              <span>:</span>
+              <span className="leading-[40px] text-[#888]">:</span>
               <input
                 type="number"
                 min="0"
                 max="59"
                 value={seconds}
                 onChange={(e) => setSeconds(Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
+                className="w-[60px] p-2 text-lg text-center bg-[#16213e] border border-[#4a4e69] rounded text-[#eee] outline-none"
               />
             </div>
           ) : null}
-          <div className="timer-display">{formatTime(timeLeft)}</div>
-          <div className="timer-controls">
+          <div className="text-5xl font-mono text-center my-2.5 text-white">{formatTime(timeLeft)}</div>
+          <div className="flex justify-center gap-2.5 flex-wrap">
             {!isRunning ? (
-              <button className="timer-btn primary" onClick={handleStart}>
+              <button
+                className="px-5 py-2.5 text-sm border-none rounded-md cursor-pointer bg-[#9d4edd] text-white"
+                onClick={handleStart}
+              >
                 {timeLeft === null ? 'Start' : 'Resume'}
               </button>
             ) : (
-              <button className="timer-btn secondary" onClick={handlePause}>Pause</button>
+              <button
+                className="px-5 py-2.5 text-sm border-none rounded-md cursor-pointer bg-[#4a4e69] text-white"
+                onClick={handlePause}
+              >Pause</button>
             )}
-            <button className="timer-btn danger" onClick={handleReset}>Reset</button>
+            <button
+              className="px-5 py-2.5 text-sm border-none rounded-md cursor-pointer bg-[#ef4444] text-white"
+              onClick={handleReset}
+            >Reset</button>
           </div>
         </div>
       );
@@ -1010,22 +613,36 @@
 
       return (
         <div>
-          <div className="timer-display">{formatTime(elapsed)}</div>
-          <div className="timer-controls">
+          <div className="text-5xl font-mono text-center my-2.5 text-white">{formatTime(elapsed)}</div>
+          <div className="flex justify-center gap-2.5 flex-wrap">
             {!isRunning ? (
-              <button className="timer-btn primary" onClick={handleStart}>
+              <button
+                className="px-5 py-2.5 text-sm border-none rounded-md cursor-pointer bg-[#9d4edd] text-white"
+                onClick={handleStart}
+              >
                 {elapsed === 0 ? 'Start' : 'Resume'}
               </button>
             ) : (
               <>
-                <button className="timer-btn secondary" onClick={handleStop}>Stop</button>
-                <button className="timer-btn secondary" onClick={handleLap}>Lap</button>
+                <button
+                  className="px-5 py-2.5 text-sm border-none rounded-md cursor-pointer bg-[#4a4e69] text-white"
+                  onClick={handleStop}
+                >Stop</button>
+                <button
+                  className="px-5 py-2.5 text-sm border-none rounded-md cursor-pointer bg-[#4a4e69] text-white"
+                  onClick={handleLap}
+                >Lap</button>
               </>
             )}
-            {elapsed > 0 && <button className="timer-btn danger" onClick={handleReset}>Reset</button>}
+            {elapsed > 0 && (
+              <button
+                className="px-5 py-2.5 text-sm border-none rounded-md cursor-pointer bg-[#ef4444] text-white"
+                onClick={handleReset}
+              >Reset</button>
+            )}
           </div>
           {laps.length > 0 && (
-            <div style={{ marginTop: 15, fontSize: 14, color: '#888' }}>
+            <div className="mt-4 text-sm text-[#888]">
               {laps.map((lap, i) => (
                 <div key={i}>Lap {i + 1}: {formatTime(lap)}</div>
               ))}
@@ -1051,35 +668,35 @@
           // Check for code block delimiters
           if (line.startsWith('```')) {
             inCodeBlock = !inCodeBlock;
-            result.push(<span key={i} className="md-code-block">{line}</span>);
+            result.push(<span key={i} className="bg-[#16213e] px-1 py-0.5 rounded text-[#7ee787]">{line}</span>);
             if (i < lines.length - 1) result.push('\n');
             continue;
           }
           
           // Inside code block - highlight entire line
           if (inCodeBlock) {
-            result.push(<span key={i} className="md-code-block">{line}</span>);
+            result.push(<span key={i} className="bg-[#16213e] px-1 py-0.5 rounded text-[#7ee787]">{line}</span>);
             if (i < lines.length - 1) result.push('\n');
             continue;
           }
           
           // Headings
           if (/^#{1,6}\s/.test(line)) {
-            result.push(<span key={i} className="md-heading">{line}</span>);
+            result.push(<span key={i} className="text-[#9d4edd] font-bold">{line}</span>);
             if (i < lines.length - 1) result.push('\n');
             continue;
           }
           
           // Horizontal rules
           if (/^(-{3,}|\*{3,}|_{3,})$/.test(line.trim())) {
-            result.push(<span key={i} className="md-hr">{line}</span>);
+            result.push(<span key={i} className="text-[#6e7681]">{line}</span>);
             if (i < lines.length - 1) result.push('\n');
             continue;
           }
           
           // Blockquotes
           if (/^>\s*/.test(line)) {
-            result.push(<span key={i} className="md-blockquote">{line}</span>);
+            result.push(<span key={i} className="text-[#8b949e]">{line}</span>);
             if (i < lines.length - 1) result.push('\n');
             continue;
           }
@@ -1091,15 +708,15 @@
             if (checkbox) {
               result.push(
                 <span key={i}>
-                  <span className="md-list">{match[0]}</span>
-                  <span className="md-checkbox">[{checkbox[2]}]</span>
+                  <span className="text-[#f78166]">{match[0]}</span>
+                  <span className="text-[#d29922]">[{checkbox[2]}]</span>
                   {highlightInline(line.slice(match[0].length + 3), `${i}-rest`)}
                 </span>
               );
             } else {
               result.push(
                 <span key={i}>
-                  <span className="md-list">{match[0]}</span>
+                  <span className="text-[#f78166]">{match[0]}</span>
                   {highlightInline(line.slice(match[0].length), `${i}-rest`)}
                 </span>
               );
@@ -1126,7 +743,7 @@
           // Inline code
           let match = remaining.match(/^`([^`]+)`/);
           if (match) {
-            parts.push(<span key={`${keyPrefix}-${partIndex++}`} className="md-code">{match[0]}</span>);
+            parts.push(<span key={`${keyPrefix}-${partIndex++}`} className="bg-[#16213e] px-1 py-px rounded text-[#7ee787]">{match[0]}</span>);
             remaining = remaining.slice(match[0].length);
             continue;
           }
@@ -1134,7 +751,7 @@
           // Bold with **
           match = remaining.match(/^\*\*([^*]+)\*\*/);
           if (match) {
-            parts.push(<span key={`${keyPrefix}-${partIndex++}`} className="md-bold">{match[0]}</span>);
+            parts.push(<span key={`${keyPrefix}-${partIndex++}`} className="text-[#f0a500] font-bold">{match[0]}</span>);
             remaining = remaining.slice(match[0].length);
             continue;
           }
@@ -1142,7 +759,7 @@
           // Bold with __
           match = remaining.match(/^__([^_]+)__/);
           if (match) {
-            parts.push(<span key={`${keyPrefix}-${partIndex++}`} className="md-bold">{match[0]}</span>);
+            parts.push(<span key={`${keyPrefix}-${partIndex++}`} className="text-[#f0a500] font-bold">{match[0]}</span>);
             remaining = remaining.slice(match[0].length);
             continue;
           }
@@ -1150,7 +767,7 @@
           // Italic with *
           match = remaining.match(/^\*([^*]+)\*/);
           if (match) {
-            parts.push(<span key={`${keyPrefix}-${partIndex++}`} className="md-italic">{match[0]}</span>);
+            parts.push(<span key={`${keyPrefix}-${partIndex++}`} className="text-[#00b4d8] italic">{match[0]}</span>);
             remaining = remaining.slice(match[0].length);
             continue;
           }
@@ -1158,7 +775,7 @@
           // Italic with _
           match = remaining.match(/^_([^_]+)_/);
           if (match) {
-            parts.push(<span key={`${keyPrefix}-${partIndex++}`} className="md-italic">{match[0]}</span>);
+            parts.push(<span key={`${keyPrefix}-${partIndex++}`} className="text-[#00b4d8] italic">{match[0]}</span>);
             remaining = remaining.slice(match[0].length);
             continue;
           }
@@ -1166,7 +783,7 @@
           // Links [text](url)
           match = remaining.match(/^\[([^\]]+)\]\([^)]+\)/);
           if (match) {
-            parts.push(<span key={`${keyPrefix}-${partIndex++}`} className="md-link">{match[0]}</span>);
+            parts.push(<span key={`${keyPrefix}-${partIndex++}`} className="text-[#58a6ff]">{match[0]}</span>);
             remaining = remaining.slice(match[0].length);
             continue;
           }
@@ -1174,13 +791,12 @@
           // Images ![alt](url)
           match = remaining.match(/^!\[([^\]]*)\]\([^)]+\)/);
           if (match) {
-            parts.push(<span key={`${keyPrefix}-${partIndex++}`} className="md-link">{match[0]}</span>);
+            parts.push(<span key={`${keyPrefix}-${partIndex++}`} className="text-[#58a6ff]">{match[0]}</span>);
             remaining = remaining.slice(match[0].length);
             continue;
           }
           
-          // No match - add single character as plain text
-          // Accumulate plain text until we hit potential markdown
+          // No match - accumulate plain text until we hit potential markdown
           let plainEnd = 1;
           while (plainEnd < remaining.length && !/[`*_\[!]/.test(remaining[plainEnd])) {
             plainEnd++;
@@ -1193,7 +809,7 @@
       };
       
       return (
-        <div className="markdown-content">
+        <div className="break-words leading-relaxed whitespace-pre-wrap font-mono text-[0.9em]">
           {highlightMarkdown(content)}
         </div>
       );
@@ -1206,10 +822,7 @@
       const openGrok = () => {
         // Use template from config, replacing {{CONTENT}} placeholder
         const prompt = grokPromptTemplate.replace('{{CONTENT}}', content);
-
         const encoded = encodeURIComponent(prompt);
-        
-        // Simply open grok.com - the system will handle whether to open in app or browser
         window.open(`https://grok.com/?q=${encoded}`, '_blank');
         setIsOpen(false);
       };
@@ -1217,13 +830,19 @@
       return (
         <>
           {isOpen && (
-            <div className="fab-menu">
-              <button className="fab-menu-item" onClick={openGrok}>
+            <div className="fixed bottom-[85px] right-5 bg-[#16213e] rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.3)] overflow-hidden z-[100]">
+              <button
+                className="block w-full px-5 py-[15px] bg-transparent border-none text-[#eee] text-left cursor-pointer whitespace-nowrap hover:bg-[#4a4e69]"
+                onClick={openGrok}
+              >
                 🤖 Ask Grok AI for help
               </button>
             </div>
           )}
-          <button className="fab" onClick={() => setIsOpen(!isOpen)}>
+          <button
+            className="fixed bottom-5 right-5 w-14 h-14 rounded-full bg-[#9d4edd] text-white border-none text-2xl cursor-pointer shadow-[0_4px_12px_rgba(157,78,221,0.4)] z-[100] hover:bg-[#7b2cbf]"
+            onClick={() => setIsOpen(!isOpen)}
+          >
             {isOpen ? '×' : '+'}
           </button>
         </>
@@ -1261,17 +880,13 @@
           }
         };
 
-        // Request wake lock when page becomes visible
         const handleVisibilityChange = () => {
           if (document.visibilityState === 'visible') {
             requestWakeLock();
           }
         };
 
-        // Initial request
         requestWakeLock();
-
-        // Re-acquire wake lock when page becomes visible again
         document.addEventListener('visibilitychange', handleVisibilityChange);
 
         return () => {
@@ -1309,7 +924,6 @@
         let reconnectTimeout = null;
 
         const connectSSE = () => {
-          // Clean up existing connection
           if (eventSource) {
             eventSource.close();
           }
@@ -1328,9 +942,7 @@
           };
 
           eventSource.onerror = () => {
-            // Close the failed connection
             eventSource.close();
-            // Try to reconnect after a delay
             clearTimeout(reconnectTimeout);
             reconnectTimeout = setTimeout(() => {
               console.log('Reconnecting SSE...');
@@ -1339,10 +951,8 @@
           };
         };
 
-        // Initial connection
         connectSSE();
 
-        // Reconnect when page becomes visible (handles mobile app switching)
         const handleVisibilityChange = () => {
           if (document.visibilityState === 'visible') {
             console.log('Page visible, reconnecting SSE...');
@@ -1382,14 +992,9 @@
       // Update document title based on active tab
       useEffect(() => {
         let title = 'Focus';
-        
         switch (activeTab) {
           case 'alarm':
-            if (alarmTime) {
-              title = `⏰ ${alarmTime} - Focus`;
-            } else {
-              title = '⏰ Alarm - Focus';
-            }
+            title = alarmTime ? `⏰ ${alarmTime} - Focus` : '⏰ Alarm - Focus';
             break;
           case 'timer':
             title = `⏱️ ${formatTabTime(timerTimeLeft)} - Focus`;
@@ -1398,13 +1003,11 @@
             title = `🏃 ${formatStopwatchTime(stopwatchElapsed)} - Focus`;
             break;
         }
-        
         document.title = title;
       }, [activeTab, alarmTime, timerTimeLeft, stopwatchElapsed]);
 
       const handleTabClick = (tab) => {
         if (activeTab === tab) {
-          // Toggle collapse when clicking the same tab
           setCollapsedTabs(prev => {
             const newSet = new Set(prev);
             if (newSet.has(tab)) {
@@ -1415,7 +1018,6 @@
             return newSet;
           });
         } else {
-          // Switch to new tab and ensure it's not collapsed
           setActiveTab(tab);
           setCollapsedTabs(prev => {
             const newSet = new Set(prev);
@@ -1426,7 +1028,6 @@
       };
 
       const handleLogin = () => {
-        // Re-check auth after login
         fetch('api/check-auth')
           .then(res => {
             if (res.ok) {
@@ -1439,51 +1040,71 @@
       };
 
       if (isAuthenticated === null) {
-        return <div className="login-container"><h1>Loading...</h1></div>;
+        return (
+          <div className="flex flex-col items-center justify-center min-h-screen">
+            <h1 className="text-2xl font-bold text-[#9d4edd]">Loading...</h1>
+          </div>
+        );
       }
 
       if (!isAuthenticated) {
         return <Login onLogin={handleLogin} />;
       }
 
+      const tabBtnBase = "flex-1 py-3 px-3 bg-transparent border-none text-sm cursor-pointer relative flex flex-col items-center gap-1";
+
       return (
-        <div className="app-container">
-          <div className="tabs-section">
-            <div className="tab-buttons">
+        <div className="flex flex-col h-screen max-h-screen">
+          <div className="bg-[#16213e] border-b border-[#4a4e69]">
+            <div className="flex border-b border-[#4a4e69]">
               <button
-                className={`tab-btn ${activeTab === 'alarm' ? 'active' : ''} ${alarmActive ? 'running' : ''}`}
+                data-tab="alarm"
+                className={`${tabBtnBase} ${alarmActive ? 'text-[#4ade80]' : (activeTab === 'alarm' ? 'text-[#9d4edd]' : 'text-[#888]')}`}
                 onClick={() => handleTabClick('alarm')}
               >
                 <span>Alarm</span>
-                {alarmTime && <span className="tab-info">{alarmTime}</span>}
+                {alarmTime && (
+                  <span className={`text-[28px] font-mono ${activeTab === 'alarm' ? 'text-[#9d4edd]' : 'text-[#666]'}`}>
+                    {alarmTime}
+                  </span>
+                )}
+                {activeTab === 'alarm' && <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-[#9d4edd]"></div>}
               </button>
               <button
-                className={`tab-btn ${activeTab === 'timer' ? 'active' : ''} ${timerActive ? 'running' : ''}`}
+                data-tab="timer"
+                className={`${tabBtnBase} ${timerActive ? 'text-[#4ade80]' : (activeTab === 'timer' ? 'text-[#9d4edd]' : 'text-[#888]')}`}
                 onClick={() => handleTabClick('timer')}
               >
                 <span>Timer</span>
-                <span className="tab-info">{formatTabTime(timerTimeLeft)}</span>
+                <span className={`text-[28px] font-mono ${activeTab === 'timer' ? 'text-[#9d4edd]' : 'text-[#666]'}`}>
+                  {formatTabTime(timerTimeLeft)}
+                </span>
+                {activeTab === 'timer' && <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-[#9d4edd]"></div>}
               </button>
               <button
-                className={`tab-btn ${activeTab === 'stopwatch' ? 'active' : ''} ${stopwatchActive ? 'running' : ''}`}
+                data-tab="stopwatch"
+                className={`${tabBtnBase} ${stopwatchActive ? 'text-[#4ade80]' : (activeTab === 'stopwatch' ? 'text-[#9d4edd]' : 'text-[#888]')}`}
                 onClick={() => handleTabClick('stopwatch')}
               >
                 <span>Stopwatch</span>
-                <span className="tab-info">{formatStopwatchTime(stopwatchElapsed)}</span>
+                <span className={`text-[28px] font-mono ${activeTab === 'stopwatch' ? 'text-[#9d4edd]' : 'text-[#666]'}`}>
+                  {formatStopwatchTime(stopwatchElapsed)}
+                </span>
+                {activeTab === 'stopwatch' && <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-[#9d4edd]"></div>}
               </button>
             </div>
-            <div className={`tab-content ${activeTab === 'alarm' && !collapsedTabs.has('alarm') ? 'active' : ''}`}>
+            <div className={`p-4 min-h-[140px] ${activeTab === 'alarm' && !collapsedTabs.has('alarm') ? 'block' : 'hidden'}`}>
               <Alarm isActive={alarmActive} onActiveChange={setAlarmActive} onAlarmTimeChange={setAlarmTime} />
             </div>
-            <div className={`tab-content ${activeTab === 'timer' && !collapsedTabs.has('timer') ? 'active' : ''}`}>
+            <div className={`p-4 min-h-[140px] ${activeTab === 'timer' && !collapsedTabs.has('timer') ? 'block' : 'hidden'}`}>
               <Timer isActive={timerActive} onActiveChange={setTimerActive} onTimeLeftChange={setTimerTimeLeft} />
             </div>
-            <div className={`tab-content ${activeTab === 'stopwatch' && !collapsedTabs.has('stopwatch') ? 'active' : ''}`}>
+            <div className={`p-4 min-h-[140px] ${activeTab === 'stopwatch' && !collapsedTabs.has('stopwatch') ? 'block' : 'hidden'}`}>
               <Stopwatch isActive={stopwatchActive} onActiveChange={setStopwatchActive} onElapsedChange={setStopwatchElapsed} />
             </div>
           </div>
 
-          <div className="content-section">
+          <div className="flex-1 overflow-y-auto p-4 bg-[#1a1a2e]">
             <MarkdownViewer content={content} />
           </div>
 

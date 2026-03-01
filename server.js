@@ -83,6 +83,7 @@ const verifyToken = (token) => {
   }
 };
 
+app.disable('x-powered-by');
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.static('public'));

@@ -86,6 +86,21 @@ Start the app
         ProxyPass / http://prog1-focus-app-1:3000/
         ProxyPassReverse / http://prog1-focus-app-1:3000/
 
+        # SSE support
+        ProxyTimeout 3600
+        SetEnv proxy-initial-not-pooled 1
+        SetEnv proxy-sendchunked 1
+
+        # Security headers
+        Header always set X-Content-Type-Options "nosniff"
+        Header always set X-Frame-Options "DENY"
+        Header always set Content-Security-Policy "default-src 'self'; script-src 'self' https://unpkg.com https://cdn.tailwindcss.com 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self'; worker-src 'self'; img-src 'self'; font-src 'self'"
+        Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        Header always set X-XSS-Protection "1; mode=block"
+        Header always set Referrer-Policy "strict-origin-when-cross-origin"
+        Header edit Set-Cookie "^(.*)$" "$1; Secure"
+        ServerSignature Off
+
         RewriteEngine On
         RewriteCond %{HTTP:Connection} upgrade [NC]
         RewriteCond %{HTTP:Upgrade} websocket [NC]
@@ -115,6 +130,21 @@ Start the app
         ProxyPassReverse /focusapp/ http://prog1-focus-app-1:3000/
         ProxyPass /focusapp http://prog1-focus-app-1:3000
         ProxyPassReverse /focusapp http://prog1-focus-app-1:3000
+
+        # SSE support
+        ProxyTimeout 3600
+        SetEnv proxy-initial-not-pooled 1
+        SetEnv proxy-sendchunked 1
+
+        # Security headers
+        Header always set X-Content-Type-Options "nosniff"
+        Header always set X-Frame-Options "DENY"
+        Header always set Content-Security-Policy "default-src 'self'; script-src 'self' https://unpkg.com https://cdn.tailwindcss.com 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self'; worker-src 'self'; img-src 'self'; font-src 'self'"
+        Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        Header always set X-XSS-Protection "1; mode=block"
+        Header always set Referrer-Policy "strict-origin-when-cross-origin"
+        Header edit Set-Cookie "^(.*)$" "$1; Secure"
+        ServerSignature Off
 
         RewriteEngine On
         RewriteCond %{HTTP:Connection} upgrade [NC]
