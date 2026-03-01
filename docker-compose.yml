@@ -1,6 +1,8 @@
 services:
   focus-app:
-    build: .
+    build:
+      context: .
+      network: host
     networks:
       - apache_letsencrypt
     volumes:
